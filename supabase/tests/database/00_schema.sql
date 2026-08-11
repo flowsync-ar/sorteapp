@@ -1,8 +1,11 @@
 -- pgTAP: schema shape + structural constraints for raffle-platform core tables.
 -- Covers tasks.md 2.1: raffle_edition, tier, "order", raffle_number, receipt,
 -- unique(edition_id, number) defense-in-depth, single-open-edition partial unique index.
+-- Also covers tasks.md 5.2 (PR5): buyer_* contact columns added to "order" so
+-- createOrder() can persist the checkout form's identity data for
+-- eligibility/audit (spec.md §9 "registro inmutable de orden, comprador...").
 begin;
-select plan(23);
+select plan(27);
 
 -- Tables exist
 select has_table('public', 'raffle_edition', 'raffle_edition table exists');
@@ -26,6 +29,12 @@ select col_not_null('public', 'raffle_edition', 'number_cap', 'number_cap is NOT
 
 -- raffle_number: 6-digit range + defense-in-depth unique(edition_id, number)
 select col_is_unique('public', 'raffle_number', array['edition_id', 'number'], 'raffle_number has unique(edition_id, number)');
+
+-- order: buyer contact fields (PR5, checkout form) are required, not optional
+select col_not_null('public', 'order', 'buyer_name', 'order.buyer_name is NOT NULL');
+select col_not_null('public', 'order', 'buyer_email', 'order.buyer_email is NOT NULL');
+select col_not_null('public', 'order', 'buyer_dni', 'order.buyer_dni is NOT NULL');
+select col_not_null('public', 'order', 'buyer_phone', 'order.buyer_phone is NOT NULL');
 
 -- RLS is enabled on every RLS-bearing table
 select is(relrowsecurity, true, 'raffle_edition has RLS enabled')
@@ -66,8 +75,13 @@ select throws_ok(
 
 select test_helpers.create_user('schema-test-buyer@example.com') as buyer_id \gset
 
-insert into "order" (id, user_id, edition_id, tier_key, method, status, amount_ars)
-select gen_random_uuid(), :'buyer_id'::uuid, id, 'inicial', 'mp', 'approved', 1000
+insert into "order" (
+  id, user_id, edition_id, tier_key, method, status, amount_ars,
+  buyer_name, buyer_email, buyer_dni, buyer_phone
+)
+select
+  gen_random_uuid(), :'buyer_id'::uuid, id, 'inicial', 'mp', 'approved', 1000,
+  'Test Buyer', 'schema-test-buyer@example.com', '30123456', '+5491100000000'
 from raffle_edition where status = 'open' limit 1
 returning id as order_id \gset
 

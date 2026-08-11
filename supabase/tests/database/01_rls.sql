@@ -17,12 +17,24 @@ select test_helpers.create_user('rls-buyer-b@example.com') as buyer_b \gset
 select test_helpers.create_user('rls-admin@example.com', 'admin') as admin_id \gset
 
 -- Seed one order per buyer as postgres (owner/superuser, bypasses RLS for setup)
-insert into "order" (id, user_id, edition_id, tier_key, method, status, amount_ars)
-values (gen_random_uuid(), :'buyer_a'::uuid, :'edition_id'::uuid, 'inicial', 'mp', 'approved', 1000)
+insert into "order" (
+  id, user_id, edition_id, tier_key, method, status, amount_ars,
+  buyer_name, buyer_email, buyer_dni, buyer_phone
+)
+values (
+  gen_random_uuid(), :'buyer_a'::uuid, :'edition_id'::uuid, 'inicial', 'mp', 'approved', 1000,
+  'Buyer A', 'rls-buyer-a@example.com', '30111111', '+5491100000001'
+)
 returning id as order_a \gset
 
-insert into "order" (id, user_id, edition_id, tier_key, method, status, amount_ars)
-values (gen_random_uuid(), :'buyer_b'::uuid, :'edition_id'::uuid, 'inicial', 'mp', 'approved', 1000)
+insert into "order" (
+  id, user_id, edition_id, tier_key, method, status, amount_ars,
+  buyer_name, buyer_email, buyer_dni, buyer_phone
+)
+values (
+  gen_random_uuid(), :'buyer_b'::uuid, :'edition_id'::uuid, 'inicial', 'mp', 'approved', 1000,
+  'Buyer B', 'rls-buyer-b@example.com', '30222222', '+5491100000002'
+)
 returning id as order_b \gset
 
 insert into raffle_number (edition_id, order_id, user_id, number)

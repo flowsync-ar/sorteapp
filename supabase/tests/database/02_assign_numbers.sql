@@ -43,8 +43,14 @@ begin
   -- session simulate what the FOR UPDATE lock reduces *real* concurrent callers
   -- to: a strictly serialized sequence of ordinal allocations.
   for i in 1..40 loop
-    insert into "order" (id, user_id, edition_id, tier_key, method, status, amount_ars)
-    values (gen_random_uuid(), v_buyer_id, v_edition_id, 'inicial', 'mp', 'approved', 5000)
+    insert into "order" (
+      id, user_id, edition_id, tier_key, method, status, amount_ars,
+      buyer_name, buyer_email, buyer_dni, buyer_phone
+    )
+    values (
+      gen_random_uuid(), v_buyer_id, v_edition_id, 'inicial', 'mp', 'approved', 5000,
+      'Assign Buyer', 'assign-buyer@example.com', '30123456', '+5491100000000'
+    )
     returning id into v_order_id;
 
     for v_n in select assign_numbers(v_order_id, 5) loop
@@ -82,8 +88,14 @@ declare
   v_buyer_id uuid := current_setting('test.buyer_id')::uuid;
 begin
   perform set_config('role', 'service_role', true);
-  insert into "order" (id, user_id, edition_id, tier_key, method, status, amount_ars)
-  values (gen_random_uuid(), v_buyer_id, v_edition_id, 'inicial', 'mp', 'approved', 1000)
+  insert into "order" (
+    id, user_id, edition_id, tier_key, method, status, amount_ars,
+    buyer_name, buyer_email, buyer_dni, buyer_phone
+  )
+  values (
+    gen_random_uuid(), v_buyer_id, v_edition_id, 'inicial', 'mp', 'approved', 1000,
+    'Assign Buyer', 'assign-buyer@example.com', '30123456', '+5491100000000'
+  )
   returning id into v_order_id;
   perform set_config('test.sold_out_order_id', v_order_id::text, true);
 end;

@@ -175,7 +175,15 @@ refresh_token_reuse_interval = 10
 # Allow/disallow new user signups to your project.
 enable_signup = true
 # Allow/disallow anonymous sign-ins to your project.
-enable_anonymous_sign_ins = false
+# Enabled in PR5: guest checkout (spec.md §3) has no login step, but "order"
+# requires a non-null user_id FK to auth.users for RLS (design.md §3
+# "owner can read/create their own"). createOrder() calls
+# supabase.auth.signInAnonymously() when there is no session yet, so the
+# buyer gets a real auth.uid() without a signup form. The buyer's email is
+# still captured on the order row and can be used later (PR8, member area)
+# to let them claim/upgrade this anonymous identity into a real account via
+# supabase.auth.updateUser({ email, password }).
+enable_anonymous_sign_ins = true
 # Allow/disallow testing manual linking of accounts
 enable_manual_linking = false
 # Passwords shorter than this value will be rejected as weak. Minimum 6, recommended 8 or more.
