@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { HeroPrize } from "@/components/marketing/HeroPrize";
 import { HowItWorks } from "@/components/marketing/HowItWorks";
-import { TierCatalog } from "@/components/marketing/TierCatalog";
+import { TierCards } from "@/components/marketing/TierCards";
 import { PrizeOfMonth } from "@/components/marketing/PrizeOfMonth";
 import { TrustSection } from "@/components/marketing/TrustSection";
 import { PreviousWinners } from "@/components/marketing/PreviousWinners";
@@ -36,7 +36,7 @@ export default function LandingPage() {
     <>
       <HeroPrize prize={currentPrize} />
       <HowItWorks steps={howItWorksSteps} />
-      <TierCatalog tiers={tiers} />
+      <TierCards tiers={tiers} />
       <PrizeOfMonth prize={currentPrize} />
       <TrustSection transparency={transparency} />
 
