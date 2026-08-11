@@ -2,9 +2,18 @@ import { expect, test } from "@playwright/test";
 
 // PR5 batch scope (tasks.md 5.3, spec.md §3 "Flujo de selección"): covers
 // tier selection on the landing through order creation, for BOTH payment
-// methods. Real Mercado Pago (PR6) and comprobante upload (PR7) are NOT
-// exercised here — both destinations are "en construcción" placeholders by
-// design for this batch.
+// methods. Comprobante upload (PR7) is NOT exercised here — that
+// destination is still an "en construcción" placeholder.
+//
+// PR6 note: the Mercado Pago test below does NOT exercise a real payment.
+// This environment has no MERCADOPAGO_ACCESS_TOKEN configured (deliberately
+// absent from CI and local dev — see env.local.example), so preference
+// creation fails fast on the missing-env-var check before ever reaching
+// the network. That is a genuine exercise of the "no dejar la UI colgada"
+// error path (tasks.md PR6.5), not a mock — it just can't reach MP's real
+// Checkout Pro UI without real sandbox credentials, which this sandbox does
+// not have (no internet access). A real MP sandbox run is left as a manual
+// verification step for whoever configures real credentials.
 test.describe("Checkout flow", () => {
   test("selecting a tier on the landing navigates to its checkout page", async ({
     page,
@@ -20,7 +29,7 @@ test.describe("Checkout flow", () => {
     ).toBeVisible();
   });
 
-  test("buying with Mercado Pago creates a pending order and redirects to the MP placeholder", async ({
+  test("buying with Mercado Pago creates a pending order and shows a graceful error when Mercado Pago is unreachable/unconfigured", async ({
     page,
   }) => {
     await page.goto("/checkout/inicial");
@@ -36,10 +45,17 @@ test.describe("Checkout flow", () => {
     await expect(
       page.getByRole("heading", { level: 1, name: "Pago con Mercado Pago" }),
     ).toBeVisible();
-    await expect(page.getByText("Integración en construcción")).toBeVisible();
-    await expect(page.getByText("inicial")).toBeVisible();
-    await expect(page.getByText("$ 15.000")).toBeVisible();
-    await expect(page.getByText("pending")).toBeVisible();
+    // Next.js's own route announcer (`#__next-route-announcer__`) also has
+    // `role="alert"`, so scope precisely instead of `getByRole("alert")`
+    // alone (strict-mode violation caught by this test, not RTL, since
+    // jsdom component tests never render Next's router chrome).
+    await expect(
+      page.getByRole("alert").filter({ hasText: "No pudimos continuar" }),
+    ).toBeVisible();
+    await expect(page.getByText(/no pudimos iniciar el pago/i)).toBeVisible();
+    await expect(
+      page.getByRole("link", { name: /volver a intentar/i }),
+    ).toBeVisible();
   });
 
   test("buying with bank transfer applies the discount and redirects to the comprobante placeholder", async ({
