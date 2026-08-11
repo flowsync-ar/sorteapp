@@ -5,9 +5,10 @@ y sumate a un curso. MVP construido con Next.js (App Router), Tailwind CSS v4
 y Supabase.
 
 > Este README cubre PR1 (scaffold) + PR2 (schema, RLS y asignación de números
-> en base de datos). El resto de las funcionalidades (landing, checkout,
-> Mercado Pago, panel admin, etc.) se incorporan en PRs siguientes — ver
-> `sdd/raffle-platform/tasks`.
+> en base de datos) + PR3 (wrapper TS de `assign_numbers`) + PR4 (landing
+> pública y Términos y Condiciones). El resto de las funcionalidades
+> (checkout, Mercado Pago, panel admin, etc.) se incorporan en PRs
+> siguientes — ver `sdd/raffle-platform/tasks`.
 
 ## Requisitos
 
@@ -66,9 +67,15 @@ Abrí [http://localhost:3000](http://localhost:3000).
 ## Estructura
 
 ```
-app/                        rutas (App Router)
+app/
+  (marketing)/               landing pública, /ganadores, /transparencia,
+                              /faq, /terminos, /privacidad
 components/                 ui/ marketing/ member/ admin/
-lib/                         supabase/, utilidades (env, etc.)
+lib/
+  supabase/                  clientes de Supabase
+  raffle/assign.ts           wrapper TS sobre la RPC assign_numbers
+  marketing/content.ts       contenido de ejemplo de la landing (con
+                              placeholders "[ ]" para datos reales pendientes)
 supabase/
   config.toml               config del proyecto Supabase local
   migrations/                migraciones SQL versionadas (orden = timestamp)
@@ -76,6 +83,22 @@ supabase/
   tests/database/            tests pgTAP (schema, RLS, assign_numbers)
 e2e/                        tests end-to-end (Playwright)
 ```
+
+## Landing pública y contenido legal (PR4)
+
+La landing (`/`) usa contenido de ejemplo realista (`lib/marketing/content.ts`),
+NO datos reales del negocio. Antes de publicar hay que completar los
+placeholders marcados `[ ]`/`TODO` — en particular:
+
+- `lib/marketing/content.ts` → `transparency`: organismo de lotería, número de
+  autorización, jurisdicción y datos del escribano.
+- `app/(marketing)/terminos/page.tsx`: Términos y Condiciones completos, con
+  el mismo checklist de datos pendientes al final del documento.
+- `app/(marketing)/privacidad/page.tsx`: stub — falta redactar la Política de
+  Privacidad real.
+- `currentPrize` y `previousWinners` en `content.ts`: premio e imagen reales
+  de la edición vigente; los ganadores mostrados son ejemplos ilustrativos,
+  no datos reales.
 
 ## Base de datos (Supabase local + pgTAP)
 
