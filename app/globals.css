@@ -1,0 +1,24 @@
+@import "tailwindcss";
+
+/* Design tokens — "Premio con respaldo" (ADR-3): dark editorial base,
+   restrained champagne-gold accent, emerald trust signal. */
+@theme {
+  --color-ink: oklch(18% 0.03 265);
+  --color-surface: oklch(22% 0.03 265);
+  --color-champagne: oklch(83% 0.1 85);
+  --color-emerald: oklch(70% 0.13 160);
+  --color-foreground: oklch(97% 0.01 265);
+  --color-muted-foreground: oklch(72% 0.02 265);
+
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+
+  --font-display: var(--font-fraunces), "Fraunces", serif;
+  --font-sans: var(--font-geist-sans), "Geist", "Inter", sans-serif;
+}
+
+body {
+  background: var(--color-ink);
+  color: var(--color-foreground);
+  font-family: var(--font-sans);
+}
