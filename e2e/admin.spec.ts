@@ -97,6 +97,49 @@ test.describe("Admin panel", () => {
     ensureOpenEdition();
   });
 
+  test("admin searches a buyer profile by email and by DNI across editions", async ({ page }) => {
+    // admin-panel-v2 work unit 1 (Buyer 360, `lib/admin/buyer-profile.ts`):
+    // one order, found by either identifier, no edition filter needed.
+    const buyerName = "Comprador Perfil Test";
+    const buyerEmail = `perfil.${Date.now()}@example.com`;
+    // Unique per run (unlike the fixed DNIs elsewhere in this file) because
+    // this test specifically searches BY dni and asserts an exact row count
+    // — a repeated static value would collide with orders left by prior runs
+    // against this same persistent local DB.
+    const buyerDni = String(Date.now()).slice(-8);
+
+    await page.goto("/checkout/inicial");
+    await page.getByLabel(/nombre y apellido/i).fill(buyerName);
+    await page.getByLabel(/^email$/i).fill(buyerEmail);
+    await page.getByLabel(/dni/i).fill(buyerDni);
+    await page.getByLabel(/tel[eé]fono/i).fill("+5491100005555");
+    await page.getByRole("radio", { name: /transferencia/i }).check();
+    await page.getByRole("button", { name: /confirmar compra/i }).click();
+    await expect(page).toHaveURL(/\/checkout\/orden\/.+\/comprobante$/);
+
+    const adminEmail = `admin.perfil.${Date.now()}@example.com`;
+    const adminPassword = "adminsecret123";
+    createAdminUser(adminEmail, adminPassword);
+
+    await page.goto("/login");
+    await page.getByLabel(/^email$/i).fill(adminEmail);
+    await page.getByLabel(/contraseña/i).fill(adminPassword);
+    await page.getByRole("button", { name: /iniciar sesión/i }).click();
+    await expect(page).toHaveURL("/admin");
+
+    await page.goto(`/admin/compradores?q=${encodeURIComponent(buyerEmail)}`);
+    await expect(page.getByRole("row")).toHaveCount(2);
+    const emailRow = page.getByRole("row").nth(1);
+    await expect(emailRow).toContainText("transfer");
+    await expect(emailRow).toContainText("pending");
+
+    await page.goto(`/admin/compradores?q=${buyerDni}`);
+    await expect(page.getByRole("row")).toHaveCount(2);
+    const dniRow = page.getByRole("row").nth(1);
+    await expect(dniRow).toContainText("transfer");
+    await expect(dniRow).toContainText("pending");
+  });
+
   test("redirects an unauthenticated visitor away from /admin", async ({ browser }) => {
     const context = await browser.newContext();
     const page = await context.newPage();
