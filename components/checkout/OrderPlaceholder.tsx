@@ -7,6 +7,10 @@ interface OrderPlaceholderProps {
   };
   title: string;
   noticeText: string;
+  /** Extra content below the order summary — e.g. the member-area CTA
+   * `mercadopago/page.tsx`/`comprobante/page.tsx` render once approved
+   * (tasks.md PR8). */
+  children?: React.ReactNode;
 }
 
 function formatArs(value: number) {
@@ -23,7 +27,12 @@ function formatArs(value: number) {
  * scope). Real Mercado Pago (PR6) and comprobante upload (PR7) replace the
  * notice card's content, not this summary layout.
  */
-export function OrderPlaceholder({ order, title, noticeText }: OrderPlaceholderProps) {
+export function OrderPlaceholder({
+  order,
+  title,
+  noticeText,
+  children,
+}: OrderPlaceholderProps) {
   return (
     <div className="mx-auto max-w-2xl px-6 py-16 sm:py-20">
       <p className="font-sans text-sm tracking-widest text-champagne uppercase">
@@ -61,6 +70,8 @@ export function OrderPlaceholder({ order, title, noticeText }: OrderPlaceholderP
           <dd className="text-foreground">{order.status}</dd>
         </div>
       </dl>
+
+      {children ? <div className="mt-6">{children}</div> : null}
     </div>
   );
 }

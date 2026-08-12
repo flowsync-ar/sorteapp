@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -66,7 +67,13 @@ export default async function MercadoPagoRedirectPage({ params }: PageProps) {
         order={{ ...order, amount_ars: Number(order.amount_ars) }}
         title={copy.title}
         noticeText={copy.notice}
-      />
+      >
+        {order.status === "approved" ? (
+          <Link href="/mi-cuenta" className="text-champagne underline">
+            Ver mi curso / reclamar mi cuenta
+          </Link>
+        ) : null}
+      </OrderPlaceholder>
     );
   }
 
