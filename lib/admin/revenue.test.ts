@@ -73,25 +73,29 @@ describe("getRevenueSummary", () => {
     expect(summary.totalArs).toBe(0);
   });
 
-  it("aggregates totals per edition", async () => {
+  it("aggregates per-edition totals from approved orders only, excluding pending and rejected", async () => {
     const { client } = fakeClient(rows);
 
     const summary = await getRevenueSummary(client);
 
+    // Fixture: ed-1 has 1 approved (15000) + 1 pending (9000) — only the
+    // approved amount must count. ed-2 has only 1 rejected (5000) — its
+    // edition still appears (an order exists for it) but with totalArs 0,
+    // since nothing was actually collected.
     expect(summary.byEdition).toEqual([
       {
         editionId: "ed-1",
         editionMonth: 1,
         editionYear: 2026,
         editionStatus: "closed",
-        totalArs: 24000,
+        totalArs: 15000,
       },
       {
         editionId: "ed-2",
         editionMonth: 2,
         editionYear: 2026,
         editionStatus: "open",
-        totalArs: 5000,
+        totalArs: 0,
       },
     ]);
   });

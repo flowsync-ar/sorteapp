@@ -158,7 +158,9 @@ test.describe("Admin panel", () => {
     seedOrder({ editionId: edition.id, method: "mp", status: "approved", amountArs: 12000 });
     seedOrder({ editionId: edition.id, method: "transfer", status: "pending", amountArs: 5000 });
     seedOrder({ editionId: edition.id, method: "mp", status: "rejected", amountArs: 7000 });
-    const expectedEditionTotal = (12000 + 5000 + 7000).toLocaleString("es-AR");
+    // Only the approved order counts toward the per-edition "Recaudado
+    // (aprobado)" total — pending/rejected must never inflate it.
+    const expectedEditionTotal = (12000).toLocaleString("es-AR");
 
     const adminEmail = `admin.recaudacion.${Date.now()}@example.com`;
     const adminPassword = "adminsecret123";
@@ -177,7 +179,8 @@ test.describe("Admin panel", () => {
     await page.goto("/admin/recaudacion");
 
     // Deterministic, race-free assertion: this edition_id is private to this
-    // test, so its row total is exactly the sum of the 3 orders seeded above.
+    // test, so its row total is exactly the approved order's amount (pending
+    // and rejected orders seeded above must not contribute).
     const editionRow = page.getByRole("row", {
       name: new RegExp(`${edition.month}/${edition.year}`),
     });

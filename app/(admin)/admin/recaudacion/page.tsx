@@ -24,8 +24,9 @@ const STATUS_LABELS: Record<string, string> = {
  * the aggregation, this page only renders it in three breakdown tables plus
  * the grand total. Same Server Component pattern (no client island) as
  * every other `(admin)/admin/*` page. The headline total ("Recaudado
- * (aprobado)") only counts `approved` orders — pending/rejected are still
- * visible, correctly bucketed, in the "Por estado" breakdown below.
+ * (aprobado)") AND the "Por edición" table's "Recaudado (aprobado)" column
+ * only count `approved` orders — pending/rejected are still visible,
+ * correctly bucketed, in the "Por estado" breakdown below.
  */
 export default async function AdminRecaudacionPage() {
   await requireAdminUser();
@@ -56,7 +57,7 @@ export default async function AdminRecaudacionPage() {
                 <tr className="border-b border-surface text-muted-foreground">
                   <th className="py-2 pr-4">Edición</th>
                   <th className="py-2 pr-4">Estado</th>
-                  <th className="py-2 pr-4">Total</th>
+                  <th className="py-2 pr-4">Recaudado (aprobado)</th>
                 </tr>
               </thead>
               <tbody>

@@ -51,10 +51,14 @@ interface RevenueOrderRow {
  * (`order_admin_all`, `raffle_edition_admin_all`) already grants full
  * cross-edition visibility, same as `findBuyerOrders`.
  *
- * `totalArs` (the "Recaudado total" headline figure) only sums orders with
- * `status === "approved"` — money that was actually collected. Pending and
- * rejected orders must never inflate that figure; they're still visible,
- * correctly bucketed, in `byStatus`.
+ * `totalArs` (the "Recaudado (aprobado)" headline figure) AND every
+ * `byEdition[].totalArs` only sum orders with `status === "approved"` —
+ * money that was actually collected. Pending and rejected orders must never
+ * inflate either figure; an edition with no approved orders still appears
+ * in `byEdition` (with `totalArs: 0`) if it has any order at all. Pending
+ * and rejected amounts are still visible, correctly bucketed by their own
+ * key, in `byStatus` — `byMethod`/`byStatus` intentionally sum every status,
+ * since they answer "how much per method/status", not "how much collected".
  */
 export async function getRevenueSummary(client: OrdersQueryClient): Promise<RevenueSummary> {
   const { data, error } = await client
@@ -74,7 +78,8 @@ export async function getRevenueSummary(client: OrdersQueryClient): Promise<Reve
 
   for (const row of rows) {
     const amount = Number(row.amount_ars);
-    if (row.status === "approved") {
+    const isApproved = row.status === "approved";
+    if (isApproved) {
       totalArs += amount;
     }
     byMethod[row.method] = (byMethod[row.method] ?? 0) + amount;
@@ -82,14 +87,16 @@ export async function getRevenueSummary(client: OrdersQueryClient): Promise<Reve
 
     const existing = editionTotals.get(row.edition_id);
     if (existing) {
-      existing.totalArs += amount;
+      if (isApproved) {
+        existing.totalArs += amount;
+      }
     } else {
       editionTotals.set(row.edition_id, {
         editionId: row.edition_id,
         editionMonth: row.raffle_edition?.month ?? 0,
         editionYear: row.raffle_edition?.year ?? 0,
         editionStatus: row.raffle_edition?.status ?? "",
-        totalArs: amount,
+        totalArs: isApproved ? amount : 0,
       });
     }
   }
