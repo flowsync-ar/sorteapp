@@ -198,6 +198,73 @@ test.describe("Admin panel", () => {
     await expect(statusRejectedRow).toBeVisible();
   });
 
+  test("admin plans a future prize as a draft, hits the open-edition conflict, then activates it after closing the current one", async ({
+    page,
+  }) => {
+    // admin-panel-v2 work unit 3 (prize catalog draft/publish,
+    // `lib/admin/editions.ts#publishEdition`): a `draft` edition can be
+    // created and edited freely alongside the current `open` one
+    // (`raffle_edition_single_open`, PR2, only indexes `status = 'open'`) —
+    // it only has to compete for the "one open edition" slot at the moment
+    // an admin actually tries to ACTIVATE it.
+    ensureOpenEdition("Premio Actual E2E");
+
+    const adminEmail = `admin.catalogo.${Date.now()}@example.com`;
+    const adminPassword = "adminsecret123";
+    createAdminUser(adminEmail, adminPassword);
+
+    await page.goto("/login");
+    await page.getByLabel(/^email$/i).fill(adminEmail);
+    await page.getByLabel(/contraseña/i).fill(adminPassword);
+    await page.getByRole("button", { name: /iniciar sesión/i }).click();
+    await expect(page).toHaveURL("/admin");
+
+    await page.goto("/admin/ediciones");
+
+    // Create a draft edition (planned prize) while the other one is open —
+    // this must succeed with no error at all, unlike creating a second
+    // `open` edition.
+    const draftYear = 2090 + Math.floor(Math.random() * 900);
+    // Unique per run (this is a persistent local dev DB, not reset between
+    // test runs) so `draftRow` below can never match a leftover row from a
+    // previous run of this same spec.
+    const draftPrizeTitle = `Premio Futuro E2E ${Date.now()}`;
+    await page.getByLabel(/^mes$/i).fill("6");
+    await page.getByLabel(/^año$/i).fill(String(draftYear));
+    await page.getByLabel(/cupo de números/i).fill("300");
+    await page.getByLabel(/fecha de sorteo/i).fill("2099-06-30T21:00");
+    await page.getByLabel(/^premio$/i).fill(draftPrizeTitle);
+    await page.getByLabel(/^estado$/i).selectOption("draft");
+    await page.getByRole("button", { name: /crear edición/i }).click();
+
+    const draftRow = page.getByRole("row").filter({ hasText: draftPrizeTitle });
+    await expect(draftRow).toBeVisible();
+    await expect(draftRow).toContainText("Borrador");
+
+    // Activating the draft while another edition is open must fail with the
+    // same clear, existing error copy `createEdition`'s own conflict path
+    // uses (`AdminEditionsError` 23505 -> friendly message).
+    await draftRow.getByRole("button", { name: /activar edición/i }).click();
+    await expect(draftRow.getByText(/ya hay una edición abierta/i)).toBeVisible();
+    await expect(draftRow).toContainText("Borrador");
+
+    // Close the currently open edition, then retry activating the draft —
+    // now it succeeds and the row flips from Borrador to Abierta.
+    await page.getByRole("button", { name: /cerrar edición/i }).click();
+    await expect(page.getByRole("button", { name: /cerrar edición/i })).not.toBeVisible();
+
+    await draftRow.getByRole("button", { name: /activar edición/i }).click();
+    await expect(draftRow).toContainText("Abierta");
+    await expect(draftRow.getByRole("button", { name: /activar edición/i })).not.toBeVisible();
+
+    // Known limitation (documented, not silent — same as this file's first
+    // test): `fullyParallel: true` runs every spec concurrently against the
+    // single shared `raffle_edition_single_open` constraint. This test ends
+    // with its own former-draft edition left `open`, which already restores
+    // the "exactly one open edition" invariant for any concurrently running
+    // test — no extra `ensureOpenEdition()` call needed here.
+  });
+
   test("redirects an unauthenticated visitor away from /admin", async ({ browser }) => {
     const context = await browser.newContext();
     const page = await context.newPage();

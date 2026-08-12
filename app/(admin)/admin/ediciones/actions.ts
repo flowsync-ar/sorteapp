@@ -6,15 +6,18 @@ import { requireAdminUser } from "@/lib/admin/guard";
 import {
   closeEdition,
   createEdition,
+  publishEdition,
   validateCreateEditionInput,
   type CloseEditionResult,
   type CreateEditionResult,
+  type PublishEditionResult,
 } from "@/lib/admin/editions";
 import { publishWinner, type PublishWinnerResult } from "@/lib/admin/winners";
 import { uploadPrizeImage } from "@/lib/admin/prize-image";
 import type {
   CloseEditionFormState,
   CreateEditionFormState,
+  PublishEditionFormState,
   PublishWinnerFormState,
   SetPrizeImageFormState,
 } from "@/lib/admin/types";
@@ -72,6 +75,7 @@ export async function createEditionAction(
     numberCap: String(formData.get("numberCap") ?? ""),
     prizeTitle: String(formData.get("prizeTitle") ?? ""),
     drawDate: String(formData.get("drawDate") ?? ""),
+    status: String(formData.get("status") ?? "open"),
   });
 
   if (!validation.success) {
@@ -127,6 +131,45 @@ export async function closeEditionAction(
   const supabase = await getClient();
   await close(editionId, supabase as never);
 
+  doRevalidate("/admin/ediciones");
+  return { status: "idle" };
+}
+
+interface PublishEditionActionOverrides {
+  requireAdmin?: typeof requireAdminUser;
+  publish?: (editionId: string, client: never) => Promise<PublishEditionResult>;
+  getClient?: () => ReturnType<typeof createClient>;
+  doRevalidate?: (path: string) => void;
+}
+
+/**
+ * "Activar" a planned (`draft`) edition (admin-panel-v2 work unit 3, prize
+ * catalog): flips it to `open`. Bound to a single edition id the same way
+ * `closeEditionAction`/`publishWinnerAction` are. Revalidates `/` too — the
+ * public landing reads the current `open` edition (same reason
+ * `createEditionAction` revalidates both paths).
+ */
+export async function publishEditionAction(
+  editionId: string,
+  _prevState: PublishEditionFormState,
+  _formData: FormData,
+  overrides: PublishEditionActionOverrides = {},
+): Promise<PublishEditionFormState> {
+  const requireAdmin = overrides.requireAdmin ?? requireAdminUser;
+  const publish = overrides.publish ?? publishEdition;
+  const getClient = overrides.getClient ?? createClient;
+  const doRevalidate = overrides.doRevalidate ?? revalidatePath;
+
+  await requireAdmin();
+
+  const supabase = await getClient();
+  const result = await publish(editionId, supabase as never);
+
+  if (!result.success) {
+    return { status: "error", formError: result.error };
+  }
+
+  doRevalidate("/");
   doRevalidate("/admin/ediciones");
   return { status: "idle" };
 }

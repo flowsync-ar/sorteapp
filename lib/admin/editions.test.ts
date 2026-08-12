@@ -1,5 +1,11 @@
 import { describe, expect, it, vi } from "vitest";
-import { closeEdition, createEdition, listEditions, validateCreateEditionInput } from "./editions";
+import {
+  closeEdition,
+  createEdition,
+  listEditions,
+  publishEdition,
+  validateCreateEditionInput,
+} from "./editions";
 
 const row = {
   id: "edition-1",
@@ -47,6 +53,29 @@ describe("validateCreateEditionInput", () => {
       drawDate: "2026-08-31T21:00",
     });
     expect(result.success).toBe(false);
+  });
+
+  it("defaults status to open when not provided (backward-compatible)", () => {
+    const result = validateCreateEditionInput({
+      month: "8",
+      year: "2026",
+      numberCap: "1000",
+      prizeTitle: "Moto 0km",
+      drawDate: "2026-08-31T21:00",
+    });
+    expect(result.success && result.data.status).toBe("open");
+  });
+
+  it("accepts an explicit draft status (planned prize catalog)", () => {
+    const result = validateCreateEditionInput({
+      month: "8",
+      year: "2026",
+      numberCap: "1000",
+      prizeTitle: "Moto 0km",
+      drawDate: "2026-08-31T21:00",
+      status: "draft",
+    });
+    expect(result.success && result.data.status).toBe("draft");
   });
 });
 
@@ -116,6 +145,81 @@ describe("createEdition", () => {
     expect(result).toEqual({
       success: false,
       error: expect.stringMatching(/ya hay una edición abierta/i),
+    });
+  });
+
+  it("inserts a draft edition when status is explicitly draft (planned prize, no open-slot conflict)", async () => {
+    const single = vi.fn(async () => ({ data: { id: "edition-3" }, error: null }));
+    const select = vi.fn(() => ({ single }));
+    const insert = vi.fn(() => ({ select }));
+    const from = vi.fn(() => ({ insert }));
+
+    const result = await createEdition(
+      {
+        month: 12,
+        year: 2026,
+        numberCap: 500,
+        prizeTitle: "Premio futuro",
+        drawDateIso: "2026-12-24T21:00:00Z",
+        status: "draft",
+      },
+      { from } as never,
+    );
+
+    expect(insert).toHaveBeenCalledWith(expect.objectContaining({ status: "draft" }));
+    expect(result).toEqual({ success: true, editionId: "edition-3" });
+  });
+});
+
+describe("publishEdition", () => {
+  it("activates a draft edition (draft -> open) when no edition is currently open", async () => {
+    const maybeSingle = vi.fn(async () => ({ data: { id: "edition-draft-1" }, error: null }));
+    const select = vi.fn(() => ({ maybeSingle }));
+    const eqStatus = vi.fn(() => ({ select }));
+    const eqId = vi.fn(() => ({ eq: eqStatus }));
+    const update = vi.fn(() => ({ eq: eqId }));
+    const from = vi.fn(() => ({ update }));
+
+    const result = await publishEdition("edition-draft-1", { from } as never);
+
+    expect(update).toHaveBeenCalledWith({ status: "open" });
+    expect(eqId).toHaveBeenCalledWith("id", "edition-draft-1");
+    expect(eqStatus).toHaveBeenCalledWith("status", "draft");
+    expect(result).toEqual({ success: true });
+  });
+
+  it("returns a friendly error when another edition is already open (unique violation)", async () => {
+    const maybeSingle = vi.fn(async () => ({
+      data: null,
+      error: { code: "23505", message: "duplicate" },
+    }));
+    const select = vi.fn(() => ({ maybeSingle }));
+    const eqStatus = vi.fn(() => ({ select }));
+    const eqId = vi.fn(() => ({ eq: eqStatus }));
+    const update = vi.fn(() => ({ eq: eqId }));
+    const from = vi.fn(() => ({ update }));
+
+    const result = await publishEdition("edition-draft-1", { from } as never);
+
+    expect(result).toEqual({
+      success: false,
+      error: expect.stringMatching(/ya hay una edición abierta/i),
+    });
+  });
+
+  it("returns a friendly error when the edition is no longer a draft", async () => {
+    const maybeSingle = vi.fn(async () => ({ data: null, error: null }));
+    const select = vi.fn(() => ({ maybeSingle }));
+    const eqStatus = vi.fn(() => ({ select }));
+    const eqId = vi.fn(() => ({ eq: eqStatus }));
+    const update = vi.fn(() => ({ eq: eqId }));
+    const from = vi.fn(() => ({ update }));
+
+    const result = await publishEdition("edition-draft-1", { from } as never);
+
+    expect(result).toEqual({
+      success: false,
+      error: expect.stringMatching(/ya no está en borrador/i),
     });
   });
 });

@@ -16,11 +16,15 @@ const inputClassName =
   "mt-1 w-full rounded-lg border border-surface bg-ink px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-champagne focus:outline-none aria-[invalid=true]:border-red-400";
 
 /**
- * "Crear edición" form (tasks.md PR9.4, spec.md §8). Always creates the
- * edition as `open` — the schema's own single-open-edition constraint
- * (`raffle_edition_single_open`, PR2) surfaces as this form's own
- * `formError` when another edition is already open, per this batch's own
- * instruction ("mostrar error claro si lo intenta").
+ * "Crear edición" form (tasks.md PR9.4, spec.md §8; status selector added in
+ * admin-panel-v2 work unit 3, prize catalog). Defaults to `open` — the
+ * schema's own single-open-edition constraint (`raffle_edition_single_open`,
+ * PR2) surfaces as this form's own `formError` when another edition is
+ * already open, per this batch's own instruction ("mostrar error claro si lo
+ * intenta"). Picking "Borrador" instead creates a planned-prize edition that
+ * never competes with that constraint — any number of `draft` rows can
+ * coexist; `EditionsTable`'s "Activar edición" button (`publishEdition`)
+ * flips one to `open` later.
  */
 export function CreateEditionForm({ action, initialStateOverride }: CreateEditionFormProps) {
   const [state, formAction, isPending] = useActionState(
@@ -125,6 +129,21 @@ export function CreateEditionForm({ action, initialStateOverride }: CreateEditio
             {errors.prizeTitle}
           </p>
         ) : null}
+      </div>
+
+      <div>
+        <label htmlFor={`${baseId}-status`} className="text-sm font-medium text-foreground">
+          Estado
+        </label>
+        <select
+          id={`${baseId}-status`}
+          name="status"
+          defaultValue="open"
+          className={inputClassName}
+        >
+          <option value="open">Abierta</option>
+          <option value="draft">Borrador (premio futuro)</option>
+        </select>
       </div>
 
       <div className="sm:col-span-2">

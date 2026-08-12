@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   closeEditionAction,
   createEditionAction,
+  publishEditionAction,
   publishWinnerAction,
   setPrizeImageAction,
 } from "./actions";
@@ -122,6 +123,22 @@ describe("createEditionAction", () => {
     expect(doRevalidate).toHaveBeenCalledWith("/admin/ediciones");
   });
 
+  it("passes the chosen status through to createEdition (prize catalog draft/open)", async () => {
+    const create = vi.fn().mockResolvedValue({ success: true, editionId: "edition-1" });
+
+    await createEditionAction({ status: "idle" }, validFormData({ status: "draft" }), {
+      requireAdmin: vi.fn().mockResolvedValue(adminUser()),
+      create,
+      getClient: async () => ({}) as never,
+      doRevalidate: vi.fn(),
+    });
+
+    expect(create).toHaveBeenCalledWith(
+      expect.objectContaining({ status: "draft" }),
+      expect.anything(),
+    );
+  });
+
   it("still creates the edition and returns success with a warning when the image upload fails", async () => {
     const create = vi.fn().mockResolvedValue({ success: true, editionId: "edition-1" });
     const uploadImage = vi.fn().mockRejectedValue(new Error("No pudimos subir la imagen."));
@@ -211,6 +228,43 @@ describe("closeEditionAction", () => {
     expect(result).toEqual({ status: "idle" });
     expect(close).toHaveBeenCalledWith("edition-1", expect.anything());
     expect(doRevalidate).toHaveBeenCalledWith("/admin/ediciones");
+  });
+});
+
+describe("publishEditionAction", () => {
+  it("activates the draft edition and revalidates on success", async () => {
+    const publish = vi.fn().mockResolvedValue({ success: true });
+    const doRevalidate = vi.fn();
+
+    const result = await publishEditionAction("edition-draft-1", { status: "idle" }, new FormData(), {
+      requireAdmin: vi.fn().mockResolvedValue(adminUser()),
+      publish,
+      getClient: async () => ({}) as never,
+      doRevalidate,
+    });
+
+    expect(result).toEqual({ status: "idle" });
+    expect(publish).toHaveBeenCalledWith("edition-draft-1", expect.anything());
+    expect(doRevalidate).toHaveBeenCalledWith("/");
+    expect(doRevalidate).toHaveBeenCalledWith("/admin/ediciones");
+  });
+
+  it("surfaces the domain error (e.g. another edition already open) without throwing", async () => {
+    const publish = vi
+      .fn()
+      .mockResolvedValue({ success: false, error: "Ya hay una edición abierta. Cerrala antes de activar esta." });
+
+    const result = await publishEditionAction("edition-draft-1", { status: "idle" }, new FormData(), {
+      requireAdmin: vi.fn().mockResolvedValue(adminUser()),
+      publish,
+      getClient: async () => ({}) as never,
+      doRevalidate: vi.fn(),
+    });
+
+    expect(result).toEqual({
+      status: "error",
+      formError: "Ya hay una edición abierta. Cerrala antes de activar esta.",
+    });
   });
 });
 

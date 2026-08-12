@@ -1,11 +1,13 @@
 import type { EditionView } from "@/lib/admin/editions";
 import type {
   CloseEditionAction,
+  PublishEditionAction,
   PublishWinnerAction,
   SetPrizeImageAction,
 } from "@/lib/admin/types";
 import { CloseEditionButton } from "./CloseEditionButton";
 import { PrizeImageForm } from "./PrizeImageForm";
+import { PublishEditionButton } from "./PublishEditionButton";
 import { WinnerForm } from "./WinnerForm";
 
 interface EditionsTableProps {
@@ -13,6 +15,8 @@ interface EditionsTableProps {
   closeAction: (editionId: string) => CloseEditionAction;
   publishAction: (editionId: string) => PublishWinnerAction;
   prizeImageAction: (editionId: string) => SetPrizeImageAction;
+  /** Prize catalog (admin-panel-v2 work unit 3): "activar" a `draft` row. */
+  activateAction: (editionId: string) => PublishEditionAction;
 }
 
 const STATUS_LABEL: Record<EditionView["status"], string> = {
@@ -51,6 +55,7 @@ export function EditionsTable({
   closeAction,
   publishAction,
   prizeImageAction,
+  activateAction,
 }: EditionsTableProps) {
   if (editions.length === 0) {
     return <p className="text-sm text-muted-foreground">Todavía no hay ediciones.</p>;
@@ -88,6 +93,9 @@ export function EditionsTable({
               />
             </td>
             <td className="py-3 pr-4">
+              {edition.status === "draft" ? (
+                <PublishEditionButton action={activateAction(edition.id)} />
+              ) : null}
               {edition.status === "open" ? (
                 <CloseEditionButton action={closeAction(edition.id)} />
               ) : null}

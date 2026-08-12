@@ -84,6 +84,14 @@ export interface CreateEditionInput {
   numberCap: number;
   prizeTitle: string;
   drawDateIso: string;
+  /**
+   * Prize catalog (admin-panel-v2 work unit 3): `"draft"` plans a future
+   * prize without competing with the current `open` edition —
+   * `raffle_edition_single_open` (PR2) only indexes `status = 'open'`, so
+   * any number of `draft` rows coexist freely. Defaults to `"open"` to stay
+   * backward-compatible with every caller that predates this field.
+   */
+  status?: "draft" | "open";
 }
 
 export type CreateEditionResult =
@@ -114,7 +122,7 @@ export async function createEdition(
     .insert({
       month: input.month,
       year: input.year,
-      status: "open",
+      status: input.status ?? "open",
       number_cap: input.numberCap,
       prize_title: input.prizeTitle,
       draw_date: input.drawDateIso,
@@ -162,6 +170,50 @@ export async function closeEdition(
   return { applied: Boolean(data) };
 }
 
+export type PublishEditionResult = { success: true } | { success: false; error: string };
+
+/**
+ * Activates a planned prize (admin-panel-v2 work unit 3, "catálogo de
+ * premios planificable"): flips a `draft` edition to `open`. Guarded update
+ * (`.eq("status", "draft")`, same idempotency pattern as `closeEdition`), so
+ * activating an edition that already moved on (published concurrently,
+ * closed, etc.) is reported as a friendly error instead of silently
+ * clobbering state. Relies on `raffle_edition_single_open` (PR2) to enforce
+ * "one open edition at a time" — same TOCTOU-safe "catch the 23505" pattern
+ * `createEdition` uses, not a pre-check.
+ */
+export async function publishEdition(
+  editionId: string,
+  client: EditionsQueryClient,
+): Promise<PublishEditionResult> {
+  const { data, error } = await client
+    .from("raffle_edition")
+    .update({ status: "open" })
+    .eq("id", editionId)
+    .eq("status", "draft")
+    .select("id")
+    .maybeSingle();
+
+  if (error) {
+    if (error.code === "23505") {
+      return {
+        success: false,
+        error: "Ya hay una edición abierta. Cerrala antes de activar esta.",
+      };
+    }
+    throw new AdminEditionsError("No pudimos activar la edición.", error);
+  }
+
+  if (!data) {
+    return {
+      success: false,
+      error: "Esta edición ya no está en borrador.",
+    };
+  }
+
+  return { success: true };
+}
+
 export type CreateEditionErrors = Partial<
   Record<"month" | "year" | "numberCap" | "prizeTitle" | "drawDate", string>
 >;
@@ -181,6 +233,8 @@ export function validateCreateEditionInput(input: {
   numberCap: string;
   prizeTitle: string;
   drawDate: string;
+  /** Prize catalog (work unit 3). Any other value quietly falls back to `"open"`. */
+  status?: string;
 }): CreateEditionValidation {
   const errors: CreateEditionErrors = {};
 
@@ -214,8 +268,10 @@ export function validateCreateEditionInput(input: {
     return { success: false, errors };
   }
 
+  const status: CreateEditionInput["status"] = input.status === "draft" ? "draft" : "open";
+
   return {
     success: true,
-    data: { month, year, numberCap, prizeTitle, drawDateIso },
+    data: { month, year, numberCap, prizeTitle, drawDateIso, status },
   };
 }

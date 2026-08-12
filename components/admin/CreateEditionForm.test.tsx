@@ -14,7 +14,23 @@ describe("CreateEditionForm", () => {
     expect(screen.getByLabelText(/^premio$/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/fecha de sorteo/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/foto del premio/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/estado/i)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /crear edición/i })).toBeInTheDocument();
+  });
+
+  it("defaults the status selector to Abierta (open)", () => {
+    render(<CreateEditionForm action={vi.fn()} />);
+    expect(screen.getByLabelText(/estado/i)).toHaveValue("open");
+  });
+
+  it("lets the admin plan a future prize by picking Borrador (draft)", async () => {
+    const action = vi.fn().mockResolvedValue({ status: "success" });
+    const user = userEvent.setup();
+    render(<CreateEditionForm action={action} />);
+
+    await user.selectOptions(screen.getByLabelText(/estado/i), "draft");
+
+    expect(screen.getByLabelText(/estado/i)).toHaveValue("draft");
   });
 
   it("submits the form data to the action", async () => {

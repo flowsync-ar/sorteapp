@@ -23,6 +23,13 @@ const closedEdition: EditionView = {
   status: "closed",
 };
 
+const draftEdition: EditionView = {
+  ...openEdition,
+  id: "edition-draft",
+  status: "draft",
+  prizeTitle: "Premio futuro",
+};
+
 const drawnEdition: EditionView = {
   ...openEdition,
   id: "edition-drawn",
@@ -39,6 +46,7 @@ describe("EditionsTable", () => {
         closeAction={vi.fn()}
         publishAction={vi.fn()}
         prizeImageAction={vi.fn()}
+        activateAction={vi.fn()}
       />,
     );
     expect(screen.getByText(/todavía no hay ediciones/i)).toBeInTheDocument();
@@ -51,6 +59,7 @@ describe("EditionsTable", () => {
         closeAction={() => vi.fn()}
         publishAction={() => vi.fn()}
         prizeImageAction={() => vi.fn()}
+        activateAction={() => vi.fn()}
       />,
     );
     expect(screen.getAllByRole("button", { name: /cerrar edición/i })).toHaveLength(1);
@@ -63,6 +72,7 @@ describe("EditionsTable", () => {
         closeAction={() => vi.fn()}
         publishAction={() => vi.fn()}
         prizeImageAction={() => vi.fn()}
+        activateAction={() => vi.fn()}
       />,
     );
     expect(screen.getByLabelText(/número ganador/i)).toBeInTheDocument();
@@ -75,6 +85,7 @@ describe("EditionsTable", () => {
         closeAction={() => vi.fn()}
         publishAction={() => vi.fn()}
         prizeImageAction={() => vi.fn()}
+        activateAction={() => vi.fn()}
       />,
     );
     expect(screen.getByText(/555555/)).toBeInTheDocument();
@@ -88,8 +99,37 @@ describe("EditionsTable", () => {
         closeAction={() => vi.fn()}
         publishAction={() => vi.fn()}
         prizeImageAction={() => vi.fn()}
+        activateAction={() => vi.fn()}
       />,
     );
     expect(screen.getAllByLabelText(/foto del premio/i)).toHaveLength(2);
+  });
+
+  it("shows an activate button only for draft (planned) editions", () => {
+    render(
+      <EditionsTable
+        editions={[draftEdition, openEdition, closedEdition]}
+        closeAction={() => vi.fn()}
+        publishAction={() => vi.fn()}
+        prizeImageAction={() => vi.fn()}
+        activateAction={() => vi.fn()}
+      />,
+    );
+    expect(screen.getAllByRole("button", { name: /activar edición/i })).toHaveLength(1);
+  });
+
+  it("labels a draft edition distinctly from the open and closed ones", () => {
+    render(
+      <EditionsTable
+        editions={[draftEdition, openEdition, closedEdition]}
+        closeAction={() => vi.fn()}
+        publishAction={() => vi.fn()}
+        prizeImageAction={() => vi.fn()}
+        activateAction={() => vi.fn()}
+      />,
+    );
+    expect(screen.getByText("Borrador")).toBeInTheDocument();
+    expect(screen.getByText("Abierta")).toBeInTheDocument();
+    expect(screen.getByText("Cerrada")).toBeInTheDocument();
   });
 });

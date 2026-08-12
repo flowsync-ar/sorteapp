@@ -6,7 +6,7 @@
 -- from 20260811221044_rls.sql — this file exercises them against the new
 -- columns instead of re-testing the policies themselves).
 begin;
-select plan(5);
+select plan(9);
 
 select has_column('public', 'raffle_edition', 'draw_date', 'raffle_edition.draw_date exists');
 select has_column(
@@ -63,6 +63,53 @@ select is(
   ),
   'Ana T.',
   'anon can read the winner_display_name of a drawn edition (curated, no raw PII)'
+);
+
+-- Prize catalog (admin-panel-v2 work unit 3): multiple `draft` editions
+-- coexist freely, and activating one (draft -> open) only fails once
+-- another edition is already `open` — raffle_edition_single_open
+-- (20260811221041_schema.sql) indexes `(true) where status = 'open'` only,
+-- so `draft` rows never collide with it or with each other.
+select test_helpers.authenticate_as(:'admin_id'::uuid, 'admin');
+
+-- This file's earlier `lives_ok` test left an `open` edition behind
+-- (month 9 / year 2026) -- close it first so the draft-activation
+-- assertions below start from a clean "no edition currently open" state.
+update raffle_edition set status = 'closed'
+where month = 9 and year = 2026 and status = 'open';
+
+select lives_ok(
+  $$
+    insert into raffle_edition (month, year, status, number_cap, prize_title)
+    values (11, 2030, 'draft', 100, 'Premio futuro 1')
+  $$,
+  'admin can create a first draft edition while other editions exist'
+);
+
+select lives_ok(
+  $$
+    insert into raffle_edition (month, year, status, number_cap, prize_title)
+    values (12, 2030, 'draft', 100, 'Premio futuro 2')
+  $$,
+  'admin can create a second draft edition alongside the first (no conflict between drafts)'
+);
+
+select lives_ok(
+  $$
+    update raffle_edition set status = 'open'
+    where month = 11 and year = 2030 and status = 'draft'
+  $$,
+  'lib/admin/editions.ts#publishEdition: draft -> open succeeds when no edition is currently open'
+);
+
+select throws_ok(
+  $$
+    update raffle_edition set status = 'open'
+    where month = 12 and year = 2030 and status = 'draft'
+  $$,
+  '23505',
+  null,
+  'activating a second draft while one is already open violates raffle_edition_single_open'
 );
 
 select * from finish();

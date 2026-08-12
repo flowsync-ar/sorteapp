@@ -37,6 +37,21 @@ export type CloseEditionAction = (
   formData: FormData,
 ) => Promise<CloseEditionFormState>;
 
+/**
+ * "Activar" a draft edition (admin-panel-v2 work unit 3, prize catalog) —
+ * same idle/error-only shape as `CloseEditionFormState` (no explicit success
+ * state needed: `revalidatePath` + the row disappearing from the draft list
+ * is the success signal).
+ */
+export type PublishEditionFormState =
+  | { status: "idle" }
+  | { status: "error"; formError: string };
+
+export type PublishEditionAction = (
+  prevState: PublishEditionFormState,
+  formData: FormData,
+) => Promise<PublishEditionFormState>;
+
 export type PublishWinnerFormState =
   | { status: "idle" }
   | { status: "success" }
