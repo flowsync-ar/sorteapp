@@ -29,7 +29,7 @@ export default function MarketingLayout({
           </Link>
           <nav
             aria-label="Principal"
-            className="flex gap-6 font-sans text-sm text-muted-foreground"
+            className="flex items-center gap-6 font-sans text-sm text-muted-foreground"
           >
             <Link href="/#tiers" className="hover:text-foreground">
               Cursos
@@ -39,6 +39,12 @@ export default function MarketingLayout({
             </Link>
             <Link href="/faq" className="hover:text-foreground">
               FAQ
+            </Link>
+            <Link
+              href="/login"
+              className="rounded-lg border border-surface px-4 py-1.5 text-foreground transition hover:border-champagne hover:text-champagne"
+            >
+              Ingresar
             </Link>
           </nav>
         </div>
