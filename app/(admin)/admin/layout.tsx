@@ -8,6 +8,7 @@ const NAV_ITEMS = [
   { href: "/admin/comprobantes", label: "Comprobantes" },
   { href: "/admin/participantes", label: "Participantes" },
   { href: "/admin/compradores", label: "Compradores" },
+  { href: "/admin/recaudacion", label: "Recaudación" },
   { href: "/admin/ediciones", label: "Ediciones" },
 ];
 

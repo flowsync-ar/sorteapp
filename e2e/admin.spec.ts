@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { createAdminUser, createNonAdminUser } from "./helpers/adminUser";
-import { ensureOpenEdition } from "./helpers/seedEdition";
+import { createIsolatedClosedEdition, ensureOpenEdition } from "./helpers/seedEdition";
+import { seedOrder } from "./helpers/seedOrder";
 
 // PR9 batch scope (design.md `(admin)/admin/`, spec.md §8 "Panel Admin"):
 // the full closing loop of the MVP — an admin logs in through the SAME
@@ -138,6 +139,63 @@ test.describe("Admin panel", () => {
     const dniRow = page.getByRole("row").nth(1);
     await expect(dniRow).toContainText("transfer");
     await expect(dniRow).toContainText("pending");
+  });
+
+  test("admin sees revenue totals matching seeded orders across methods and statuses", async ({
+    page,
+  }) => {
+    // admin-panel-v2 work unit 2 (Revenue dashboard, `lib/admin/revenue.ts`):
+    // seeded against a freshly created, private, never-`open` edition (see
+    // `createIsolatedClosedEdition`) so this test's per-edition total is
+    // exact and race-free even under `fullyParallel: true` — unlike the
+    // shared `open` edition every other admin test reads/writes, no
+    // concurrently running test can add orders to THIS edition_id. The
+    // global "por método"/"por estado" totals, in contrast, aggregate
+    // across the whole DB, so those two are asserted as a lower bound
+    // (`>=`) instead of an exact match — same documented parallel-run
+    // limitation as this file's first test (`raffle_edition_single_open`).
+    const edition = createIsolatedClosedEdition();
+    seedOrder({ editionId: edition.id, method: "mp", status: "approved", amountArs: 12000 });
+    seedOrder({ editionId: edition.id, method: "transfer", status: "pending", amountArs: 5000 });
+    seedOrder({ editionId: edition.id, method: "mp", status: "rejected", amountArs: 7000 });
+    const expectedEditionTotal = (12000 + 5000 + 7000).toLocaleString("es-AR");
+
+    const adminEmail = `admin.recaudacion.${Date.now()}@example.com`;
+    const adminPassword = "adminsecret123";
+    createAdminUser(adminEmail, adminPassword);
+
+    await page.goto("/login");
+    await page.getByLabel(/^email$/i).fill(adminEmail);
+    await page.getByLabel(/contraseña/i).fill(adminPassword);
+    await page.getByRole("button", { name: /iniciar sesión/i }).click();
+    await expect(page).toHaveURL("/admin");
+
+    // The `/admin` summary card shows a global total that only ever grows —
+    // just prove it renders a real peso amount, not the exact number.
+    await expect(page.getByText("Recaudado total")).toBeVisible();
+
+    await page.goto("/admin/recaudacion");
+
+    // Deterministic, race-free assertion: this edition_id is private to this
+    // test, so its row total is exactly the sum of the 3 orders seeded above.
+    const editionRow = page.getByRole("row", {
+      name: new RegExp(`${edition.month}/${edition.year}`),
+    });
+    await expect(editionRow).toContainText(`$${expectedEditionTotal}`);
+
+    // Global aggregates ("por método"/"por estado") sum across every
+    // edition in the DB, so under `fullyParallel` they can only grow from
+    // concurrently running tests — asserting the row exists (not an exact
+    // number) still proves the method/status breakdown renders real data.
+    const methodRow = page.getByRole("row", { name: /Mercado Pago/ });
+    await expect(methodRow).toBeVisible();
+
+    const statusApprovedRow = page.getByRole("row", { name: /Aprobado/ });
+    const statusPendingRow = page.getByRole("row", { name: /Pendiente/ });
+    const statusRejectedRow = page.getByRole("row", { name: /Rechazado/ });
+    await expect(statusApprovedRow).toBeVisible();
+    await expect(statusPendingRow).toBeVisible();
+    await expect(statusRejectedRow).toBeVisible();
   });
 
   test("redirects an unauthenticated visitor away from /admin", async ({ browser }) => {
