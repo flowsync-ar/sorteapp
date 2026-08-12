@@ -102,6 +102,13 @@ export interface CurrentPrize {
   drawDateIso: string;
   description: string;
   imageAlt: string;
+  /**
+   * Real `prize_image` URL of the open edition (`lib/marketing/prize.ts`),
+   * `null` when the admin hasn't uploaded one yet, `undefined` on the static
+   * fallback data below. `HeroPrize`/`PrizeOfMonth` render
+   * `/prize-placeholder.svg` unless this is a truthy string.
+   */
+  imageUrl?: string | null;
 }
 
 export const currentPrize: CurrentPrize = {
@@ -205,4 +212,22 @@ export const transparency: Transparency = {
 export const contact = {
   // TODO: reemplazar por el email/canal oficial real.
   email: "contacto@[dominio-del-sitio]",
+};
+
+export interface BankTransferInstructions {
+  bankName: string;
+  accountHolder: string;
+  cbu: string;
+  alias: string;
+}
+
+// Shown on `/checkout/orden/[orderId]/comprobante` (PR7) before the buyer
+// uploads their comprobante. Same placeholder convention as `transparency`
+// above — MUST be replaced with the real destination account before going
+// live.
+export const bankTransferInstructions: BankTransferInstructions = {
+  bankName: "[BANCO]",
+  accountHolder: "[TITULAR DE LA CUENTA]",
+  cbu: "[CBU]",
+  alias: "[ALIAS]",
 };

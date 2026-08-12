@@ -7,6 +7,9 @@ import { PrizeOfMonth } from "@/components/marketing/PrizeOfMonth";
 import { TrustSection } from "@/components/marketing/TrustSection";
 import { PreviousWinners } from "@/components/marketing/PreviousWinners";
 import { FAQAccordion } from "@/components/marketing/FAQAccordion";
+import { createClient } from "@/lib/supabase/server";
+import { getPublishedWinners } from "@/lib/marketing/winners";
+import { getOpenEditionPrize } from "@/lib/marketing/prize";
 import {
   currentPrize,
   faqItems,
@@ -22,22 +25,39 @@ export const metadata: Metadata = {
     "Comprá tu curso digital, sumá tu número de 6 cifras y participá del sorteo mensual con autorización de lotería y certificación de escribano.",
 };
 
-// Content is static example data for now (lib/marketing/content.ts). Once
-// editions/tiers/winners live in Supabase (PR2 schema is already in place),
-// swap these for parallel Promise.all fetches here — see design.md §1
-// "Data fetching parallelized with Promise.all in RSC to avoid waterfalls".
-export default function LandingPage() {
+// Most content is still static example data (lib/marketing/content.ts) —
+// tiers/transparency remain out of scope for this batch. Winners and the
+// current prize photo are the two sections this batch (PR9.5 + prize-image)
+// makes real: `getPublishedWinners`/`getOpenEditionPrize` read `raffle_edition`
+// rows the admin panel actually manages, falling back to the static example
+// data only when there's nothing to show yet (pre-launch). Both fetches are
+// independent, so they run in parallel (vercel `async-parallel`) instead of
+// a waterfall.
+export default async function LandingPage() {
+  const supabase = await createClient();
+  const [publishedWinners, openEditionPrize] = await Promise.all([
+    getPublishedWinners(supabase),
+    getOpenEditionPrize(supabase),
+  ]);
   // Landing shows the 3 most recent winners; /ganadores has the full list.
-  const recentWinners = previousWinners.slice(0, 3);
+  const recentWinners = (publishedWinners.length > 0 ? publishedWinners : previousWinners).slice(
+    0,
+    3,
+  );
   // Landing shows a condensed FAQ; /faq has the full list.
   const landingFaqItems = faqItems.slice(0, 4);
+  const prize = {
+    ...currentPrize,
+    title: openEditionPrize?.title ?? currentPrize.title,
+    imageUrl: openEditionPrize?.imageUrl ?? null,
+  };
 
   return (
     <>
-      <HeroPrize prize={currentPrize} />
+      <HeroPrize prize={prize} />
       <HowItWorks steps={howItWorksSteps} />
       <TierCards tiers={tiers} />
-      <PrizeOfMonth prize={currentPrize} />
+      <PrizeOfMonth prize={prize} />
       <TrustSection transparency={transparency} />
 
       <section>

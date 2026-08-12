@@ -38,4 +38,26 @@ describe("HeroPrize", () => {
 
     expect(screen.getByAltText(prize.imageAlt)).toBeInTheDocument();
   });
+
+  it("falls back to the placeholder image when there is no real prize image yet", () => {
+    render(<HeroPrize prize={{ ...prize, imageUrl: null }} />);
+
+    expect(screen.getByAltText(prize.imageAlt)).toHaveAttribute(
+      "src",
+      expect.stringContaining("prize-placeholder.svg"),
+    );
+  });
+
+  it("renders the real prize image url when the open edition has one", () => {
+    render(
+      <HeroPrize
+        prize={{ ...prize, imageUrl: "https://cdn.example.com/prize-images/edition-1?v=1" }}
+      />,
+    );
+
+    expect(screen.getByAltText(prize.imageAlt)).toHaveAttribute(
+      "src",
+      expect.stringContaining(encodeURIComponent("https://cdn.example.com/prize-images/edition-1?v=1")),
+    );
+  });
 });

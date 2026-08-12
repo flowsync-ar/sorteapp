@@ -60,10 +60,11 @@ export function HeroPrize({ prize }: HeroPrizeProps) {
           </a>
         </div>
 
-        {/* TODO: reemplazar por foto real del premio de la edición vigente. */}
+        {/* Real photo when the open edition has one (lib/marketing/prize.ts);
+            falls back to the static placeholder otherwise. */}
         <figure className="relative aspect-square overflow-hidden rounded-2xl border border-dashed border-champagne/30 bg-surface/40">
           <Image
-            src="/prize-placeholder.svg"
+            src={prize.imageUrl || "/prize-placeholder.svg"}
             alt={prize.imageAlt}
             fill
             sizes="(min-width: 640px) 40vw, 90vw"

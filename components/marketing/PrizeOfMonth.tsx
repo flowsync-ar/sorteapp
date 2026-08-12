@@ -13,10 +13,11 @@ export function PrizeOfMonth({ prize }: PrizeOfMonthProps) {
   return (
     <section aria-labelledby="premio-heading" className="px-6 py-16 sm:py-20">
       <div className="mx-auto grid max-w-5xl gap-10 sm:grid-cols-2 sm:items-center">
-        {/* TODO: reemplazar por foto real del premio de la edición vigente. */}
+        {/* Real photo when the open edition has one (lib/marketing/prize.ts);
+            falls back to the static placeholder otherwise. */}
         <div className="relative aspect-video overflow-hidden rounded-2xl border border-dashed border-champagne/30 sm:aspect-square">
           <Image
-            src="/prize-placeholder.svg"
+            src={prize.imageUrl || "/prize-placeholder.svg"}
             alt={prize.imageAlt}
             fill
             sizes="(min-width: 640px) 40vw, 90vw"
