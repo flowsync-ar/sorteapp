@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
@@ -38,7 +39,16 @@ export default async function AdminLayout({
     <div className="min-h-screen bg-ink text-foreground">
       <div className="border-b border-surface bg-surface/40">
         <div className="mx-auto flex max-w-6xl items-center gap-6 px-6 py-4">
-          <span className="font-display text-lg text-champagne">Panel admin</span>
+          <Link href="/admin" className="flex items-center gap-2" aria-label="Sorteapp — Panel admin">
+            <Image
+              src="/sorteapp-logo-transparent.png"
+              alt=""
+              width={737}
+              height={424}
+              className="h-7 w-auto"
+            />
+            <span className="font-display text-lg text-champagne">Panel admin</span>
+          </Link>
           <nav className="flex gap-4 text-sm">
             {NAV_ITEMS.map((item) => (
               <Link

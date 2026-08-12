@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { LegalFooter } from "@/components/marketing/LegalFooter";
 import { contact } from "@/lib/marketing/content";
@@ -16,8 +17,15 @@ export default function MarketingLayout({
     <>
       <header className="border-b border-surface px-6 py-4">
         <div className="mx-auto flex max-w-5xl items-center justify-between">
-          <Link href="/" className="font-display text-lg text-foreground">
-            Sorteapp
+          <Link href="/" className="flex items-center" aria-label="Sorteapp">
+            <Image
+              src="/sorteapp-logo-transparent.png"
+              alt="Sorteapp"
+              width={737}
+              height={424}
+              priority
+              className="h-12 w-auto"
+            />
           </Link>
           <nav
             aria-label="Principal"

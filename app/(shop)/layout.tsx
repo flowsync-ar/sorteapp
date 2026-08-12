@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 
 /**
@@ -14,8 +15,15 @@ export default function ShopLayout({
   return (
     <>
       <header className="border-b border-surface px-6 py-4">
-        <Link href="/" className="font-display text-lg text-foreground">
-          Sorteapp
+        <Link href="/" className="flex items-center" aria-label="Sorteapp">
+          <Image
+            src="/sorteapp-logo-transparent.png"
+            alt="Sorteapp"
+            width={737}
+            height={424}
+            priority
+            className="h-12 w-auto"
+          />
         </Link>
       </header>
 
