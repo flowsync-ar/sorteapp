@@ -44,12 +44,17 @@ interface RevenueOrderRow {
  * Revenue summary across every edition (tasks.md admin-panel-v2 work unit 2
  * "Dashboard de recaudación"). Aggregates `amount_ars` by edition, by
  * payment method (mp/transfer) and by order status (pending/approved/
- * rejected/expired), plus a grand total — a single in-memory reduce over one
+ * rejected/expired) over every order — a single in-memory reduce over one
  * unfiltered `order` read, same MVP-scale precedent `listParticipants`'s
  * free-text filter already set (explicit batch instruction: no RPC, no
  * materialized view). Runs against the session-scoped client — admin RLS
  * (`order_admin_all`, `raffle_edition_admin_all`) already grants full
  * cross-edition visibility, same as `findBuyerOrders`.
+ *
+ * `totalArs` (the "Recaudado total" headline figure) only sums orders with
+ * `status === "approved"` — money that was actually collected. Pending and
+ * rejected orders must never inflate that figure; they're still visible,
+ * correctly bucketed, in `byStatus`.
  */
 export async function getRevenueSummary(client: OrdersQueryClient): Promise<RevenueSummary> {
   const { data, error } = await client
@@ -69,7 +74,9 @@ export async function getRevenueSummary(client: OrdersQueryClient): Promise<Reve
 
   for (const row of rows) {
     const amount = Number(row.amount_ars);
-    totalArs += amount;
+    if (row.status === "approved") {
+      totalArs += amount;
+    }
     byMethod[row.method] = (byMethod[row.method] ?? 0) + amount;
     byStatus[row.status] = (byStatus[row.status] ?? 0) + amount;
 

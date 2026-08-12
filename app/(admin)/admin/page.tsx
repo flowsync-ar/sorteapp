@@ -13,8 +13,9 @@ function formatAmount(value: number) {
  * `/admin` dashboard root (tasks.md PR9, spec.md §8 "Gestión protegida").
  * Small at-a-glance summary + links into the admin sections — the detail
  * lives in each section's own page, not duplicated here. The "Recaudado
- * total" card (admin-panel-v2 work unit 2) reuses the exact same
- * `getRevenueSummary` aggregation `/admin/recaudacion` renders in full.
+ * (aprobado)" card (admin-panel-v2 work unit 2) reuses the exact same
+ * `getRevenueSummary` aggregation `/admin/recaudacion` renders in full —
+ * `totalArs` only counts `approved` orders, never pending/rejected.
  */
 export default async function AdminDashboardPage() {
   await requireAdminUser();
@@ -45,7 +46,7 @@ export default async function AdminDashboardPage() {
           href="/admin/recaudacion"
           className="rounded-xl border border-surface bg-surface/40 p-5 transition hover:border-champagne/50"
         >
-          <p className="text-sm text-muted-foreground">Recaudado total</p>
+          <p className="text-sm text-muted-foreground">Recaudado (aprobado)</p>
           <p className="mt-2 font-display text-3xl text-champagne">
             {formatAmount(revenue.totalArs)}
           </p>

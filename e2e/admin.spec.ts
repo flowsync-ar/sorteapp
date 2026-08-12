@@ -172,7 +172,7 @@ test.describe("Admin panel", () => {
 
     // The `/admin` summary card shows a global total that only ever grows —
     // just prove it renders a real peso amount, not the exact number.
-    await expect(page.getByText("Recaudado total")).toBeVisible();
+    await expect(page.getByText("Recaudado (aprobado)")).toBeVisible();
 
     await page.goto("/admin/recaudacion");
 

@@ -23,7 +23,9 @@ const STATUS_LABELS: Record<string, string> = {
  * recaudación"). Pure read-only summary — `getRevenueSummary` already did
  * the aggregation, this page only renders it in three breakdown tables plus
  * the grand total. Same Server Component pattern (no client island) as
- * every other `(admin)/admin/*` page.
+ * every other `(admin)/admin/*` page. The headline total ("Recaudado
+ * (aprobado)") only counts `approved` orders — pending/rejected are still
+ * visible, correctly bucketed, in the "Por estado" breakdown below.
  */
 export default async function AdminRecaudacionPage() {
   await requireAdminUser();
@@ -39,7 +41,7 @@ export default async function AdminRecaudacionPage() {
       </p>
 
       <div className="mt-6 rounded-xl border border-surface bg-surface/40 p-5">
-        <p className="text-sm text-muted-foreground">Recaudado total</p>
+        <p className="text-sm text-muted-foreground">Recaudado (aprobado)</p>
         <p className="mt-2 font-display text-3xl text-champagne">
           {formatAmount(summary.totalArs)}
         </p>

@@ -40,12 +40,37 @@ describe("getRevenueSummary", () => {
     expect(from).toHaveBeenCalledWith("order");
   });
 
-  it("aggregates the grand total across every order", async () => {
+  it("aggregates the grand total from approved orders only, excluding pending and rejected", async () => {
     const { client } = fakeClient(rows);
 
     const summary = await getRevenueSummary(client);
 
-    expect(summary.totalArs).toBe(29000);
+    // Fixture: 1 approved (15000) + 1 pending (9000) + 1 rejected (5000).
+    // "Recaudado total" must never mix in money that wasn't actually collected.
+    expect(summary.totalArs).toBe(15000);
+  });
+
+  it("does not let pending or rejected orders contribute to the grand total", async () => {
+    const { client } = fakeClient([
+      {
+        edition_id: "ed-1",
+        method: "transfer",
+        status: "pending",
+        amount_ars: "9000",
+        raffle_edition: { month: 1, year: 2026, status: "closed" },
+      },
+      {
+        edition_id: "ed-2",
+        method: "mp",
+        status: "rejected",
+        amount_ars: "5000",
+        raffle_edition: { month: 2, year: 2026, status: "open" },
+      },
+    ]);
+
+    const summary = await getRevenueSummary(client);
+
+    expect(summary.totalArs).toBe(0);
   });
 
   it("aggregates totals per edition", async () => {
