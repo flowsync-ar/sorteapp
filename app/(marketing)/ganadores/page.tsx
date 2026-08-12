@@ -1,13 +1,19 @@
 import type { Metadata } from "next";
 import { PreviousWinners } from "@/components/marketing/PreviousWinners";
 import { previousWinners } from "@/lib/marketing/content";
+import { createClient } from "@/lib/supabase/server";
+import { getPublishedWinners } from "@/lib/marketing/winners";
 
 export const metadata: Metadata = {
   title: "Ganadores anteriores — Sorteapp",
   description: "Historial de ganadores de los sorteos mensuales de Sorteapp.",
 };
 
-export default function GanadoresPage() {
+export default async function GanadoresPage() {
+  const supabase = await createClient();
+  const publishedWinners = await getPublishedWinners(supabase);
+  const winners = publishedWinners.length > 0 ? publishedWinners : previousWinners;
+
   return (
     <div className="px-6 py-12">
       <div className="mx-auto max-w-3xl text-center">
@@ -23,7 +29,7 @@ export default function GanadoresPage() {
           .
         </p>
       </div>
-      <PreviousWinners winners={previousWinners} />
+      <PreviousWinners winners={winners} />
     </div>
   );
 }
