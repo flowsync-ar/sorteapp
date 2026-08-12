@@ -15,7 +15,7 @@ interface CheckoutFormProps {
 const idleState: CheckoutFormState = { status: "idle" };
 
 const inputClassName =
-  "mt-1 w-full rounded-lg border border-surface bg-ink px-3 py-2 text-foreground placeholder:text-muted-foreground focus:border-champagne focus:outline-none aria-[invalid=true]:border-red-400";
+  "mt-1 w-full rounded-lg border border-white/15 bg-ink px-3 py-2 text-foreground placeholder:text-muted-foreground focus:border-champagne focus:outline-none aria-[invalid=true]:border-red-400";
 
 function FieldError({ id, message }: { id: string; message?: string }) {
   if (!message) return null;
