@@ -12,7 +12,27 @@ import { loginAction } from "./actions";
 export default function LoginPage() {
   return (
     <div className="mx-auto max-w-md px-6 py-16 sm:py-20">
-      <p className="font-sans text-sm tracking-widest text-champagne uppercase">
+      <Link
+        href="/"
+        className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition hover:text-foreground"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={2}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className="h-4 w-4"
+          aria-hidden="true"
+        >
+          <path d="m12 19-7-7 7-7M19 12H5" />
+        </svg>
+        Volver al inicio
+      </Link>
+
+      <p className="mt-6 font-sans text-sm tracking-widest text-champagne uppercase">
         Mi cuenta
       </p>
       <h1 className="mt-2 font-display text-3xl text-foreground sm:text-4xl">
