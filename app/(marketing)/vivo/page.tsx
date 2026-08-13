@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentDrawStatus, isDrawLive } from "@/lib/marketing/draw-status";
 import { DrawCountdown } from "@/components/marketing/DrawCountdown";
+import { LiveChatLoader } from "@/components/marketing/LiveChatLoader";
+import { LiveStreamEmbed } from "@/components/marketing/LiveStreamEmbed";
 
 export const metadata: Metadata = {
   title: "Sorteo en vivo — Sorteapp",
@@ -9,11 +11,10 @@ export const metadata: Metadata = {
 };
 
 /**
- * `/vivo`: reachable directly or via the header's `LiveDrawNavItem`.
- * TODO: embed the real stream (YouTube/Instagram Live) once we have the
- * channel — same "[ ]" placeholder convention `lib/marketing/content.ts`
- * already uses for pending real content. Until then this shows the
- * countdown before the draw and a "ya está en marcha" notice during it.
+ * `/vivo`: reachable directly or via the header's `LiveDrawNavItem`. The
+ * admin broadcasts on YouTube Live (any tool that streams to their
+ * channel — OBS, a phone via YouTube's app, etc.); `LiveStreamEmbed` shows
+ * it automatically once they go live, no per-edition config needed.
  */
 export default async function VivoPage() {
   const supabase = await createClient();
@@ -22,33 +23,38 @@ export default async function VivoPage() {
 
   return (
     <div className="px-6 py-16 sm:py-20">
-      <div className="mx-auto max-w-3xl text-center">
-        <h1 className="font-display text-4xl text-foreground sm:text-5xl">
-          Sorteo en vivo
-        </h1>
+      <div className="mx-auto grid max-w-6xl gap-8 lg:grid-cols-[1fr_360px] lg:items-start">
+        <div className="text-center lg:text-left">
+          <h1 className="font-display text-4xl text-foreground sm:text-5xl">
+            Sorteo en vivo
+          </h1>
 
-        {draw ? (
-          <>
-            {isLive ? (
-              <p className="mt-4 text-lg font-semibold text-red-400">
-                ● El sorteo ya está en marcha
-              </p>
-            ) : (
-              <div className="mt-4 flex justify-center">
-                <DrawCountdown drawDateIso={draw.drawDateIso} />
+          {draw ? (
+            <>
+              {isLive ? (
+                <p className="mt-4 text-lg font-semibold text-red-400">
+                  ● El sorteo ya está en marcha
+                </p>
+              ) : (
+                <div className="mt-4 flex justify-center lg:justify-start">
+                  <DrawCountdown drawDateIso={draw.drawDateIso} />
+                </div>
+              )}
+
+              <div className="mt-10">
+                <LiveStreamEmbed />
               </div>
-            )}
+            </>
+          ) : (
+            <p className="mt-4 text-muted-foreground">
+              Todavía no hay un sorteo programado.
+            </p>
+          )}
+        </div>
 
-            <div className="mt-10 flex aspect-video items-center justify-center rounded-2xl border border-dashed border-champagne/30 bg-surface/40 text-muted-foreground">
-              {/* TODO: reemplazar por el embed real (YouTube/Instagram Live) */}
-              La transmisión se va a mostrar acá.
-            </div>
-          </>
-        ) : (
-          <p className="mt-4 text-muted-foreground">
-            Todavía no hay un sorteo programado.
-          </p>
-        )}
+        <div className="lg:h-[36rem]">
+          <LiveChatLoader />
+        </div>
       </div>
     </div>
   );

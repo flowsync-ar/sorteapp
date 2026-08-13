@@ -22,7 +22,7 @@ export function PrizeOfMonth({ prize }: PrizeOfMonthProps) {
             alt={prize.imageAlt}
             fill
             sizes="(min-width: 640px) 40vw, 90vw"
-            className="object-cover"
+            className="object-contain"
           />
         </div>
 

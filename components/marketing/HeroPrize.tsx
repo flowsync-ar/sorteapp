@@ -73,7 +73,7 @@ export function HeroPrize({ prize }: HeroPrizeProps) {
             alt={prize.imageAlt}
             fill
             sizes="(min-width: 640px) 40vw, 90vw"
-            className="scale-125 object-cover"
+            className="object-contain"
             priority
           />
         </figure>
