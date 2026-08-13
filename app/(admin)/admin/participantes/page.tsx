@@ -11,6 +11,20 @@ function formatNumber(value: number) {
   return value.toString().padStart(6, "0");
 }
 
+const ORDER_STATUS_LABEL: Record<string, string> = {
+  pending: "Pendiente",
+  approved: "Aprobada",
+  rejected: "Rechazada",
+  expired: "Expirada",
+};
+
+const EDITION_STATUS_LABEL: Record<string, string> = {
+  draft: "Borrador",
+  open: "Abierta",
+  closed: "Cerrada",
+  drawn: "Sorteada",
+};
+
 /**
  * `/admin/participantes` (tasks.md PR9.3, spec.md §8 "buscar participantes
  * por edición/número"). A plain `<form method="get">` drives the edition +
@@ -49,7 +63,7 @@ export default async function AdminParticipantesPage({ searchParams }: PageProps
           >
             {editions.map((edition) => (
               <option key={edition.id} value={edition.id}>
-                {edition.month}/{edition.year} ({edition.status})
+                {edition.month}/{edition.year} ({EDITION_STATUS_LABEL[edition.status] ?? edition.status})
               </option>
             ))}
           </select>
@@ -86,7 +100,7 @@ export default async function AdminParticipantesPage({ searchParams }: PageProps
             <tr className="border-b border-surface text-muted-foreground">
               <th className="py-2 pr-4">Comprador</th>
               <th className="py-2 pr-4">Email</th>
-              <th className="py-2 pr-4">Tier</th>
+              <th className="py-2 pr-4">Chances</th>
               <th className="py-2 pr-4">Estado</th>
               <th className="py-2 pr-4">Números</th>
             </tr>
@@ -96,8 +110,10 @@ export default async function AdminParticipantesPage({ searchParams }: PageProps
               <tr key={participant.orderId} className="border-b border-surface/60">
                 <td className="py-2 pr-4 text-foreground">{participant.buyerName}</td>
                 <td className="py-2 pr-4 text-muted-foreground">{participant.buyerEmail}</td>
-                <td className="py-2 pr-4 text-muted-foreground">{participant.tierKey}</td>
-                <td className="py-2 pr-4 text-muted-foreground">{participant.status}</td>
+                <td className="py-2 pr-4 text-muted-foreground">{participant.chances}</td>
+                <td className="py-2 pr-4 text-muted-foreground">
+                  {ORDER_STATUS_LABEL[participant.status] ?? participant.status}
+                </td>
                 <td className="py-2 pr-4 text-champagne">
                   {participant.numbers.map(formatNumber).join(", ") || "—"}
                 </td>

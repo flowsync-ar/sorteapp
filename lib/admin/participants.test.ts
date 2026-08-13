@@ -13,9 +13,9 @@ const baseRow = {
   id: "order-1",
   buyer_name: "Ana Test",
   buyer_email: "ana@example.com",
-  tier_key: "plus",
   status: "approved",
   method: "mp",
+  tier: { numbers_granted: 3 },
   raffle_number: [{ number: 123456 }, { number: 654321 }],
 };
 
@@ -31,7 +31,7 @@ describe("listParticipants", () => {
         orderId: "order-1",
         buyerName: "Ana Test",
         buyerEmail: "ana@example.com",
-        tierKey: "plus",
+        chances: 3,
         status: "approved",
         method: "mp",
         numbers: [123456, 654321],

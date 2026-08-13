@@ -10,6 +10,11 @@ const supabaseHostname = supabaseUrl ? new URL(supabaseUrl).hostname : undefined
 
 const nextConfig: NextConfig = {
   images: {
+    // Next 16 added SSRF protection that blocks optimizing images from
+    // hosts resolving to a private/loopback IP by default (E394) -- local
+    // Supabase Storage on 127.0.0.1 is exactly that, so without this the
+    // optimizer 400s even though remotePatterns matches.
+    dangerouslyAllowLocalIP: true,
     remotePatterns: [
       // Local Supabase Storage (`supabase start`, supabase/config.toml
       // `[api] port = 54321`) -- both hostnames browsers may resolve it as.

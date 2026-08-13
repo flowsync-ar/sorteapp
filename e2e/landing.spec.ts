@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { ensureOpenEdition } from "./helpers/seedEdition";
 
 // Supersedes the PR1 placeholder smoke test (home.spec.ts) now that PR4
 // builds the real landing (spec.md §1 "Secciones obligatorias").
@@ -16,7 +17,7 @@ test.describe("Landing pública", () => {
       page.getByRole("heading", { name: "Cómo funciona" }),
     ).toBeVisible();
     await expect(
-      page.getByRole("heading", { name: "Elegí tu curso" }),
+      page.getByRole("heading", { name: "Elegí tus chances" }),
     ).toBeVisible();
     await expect(
       page.getByRole("region", { name: /transparencia/i }),
@@ -29,19 +30,19 @@ test.describe("Landing pública", () => {
     ).toBeVisible();
   });
 
-  test("shows the 3 tiers with ARS pricing (spec.md §2)", async ({ page }) => {
+  test("shows chance options with ARS pricing in a single selectable card (spec.md §2)", async ({
+    page,
+  }) => {
+    ensureOpenEdition();
     await page.goto("/");
 
-    await expect(
-      page.getByRole("heading", { name: "Inicial", level: 3 }),
-    ).toBeVisible();
-    await expect(
-      page.getByRole("heading", { name: "Plus", level: 3 }),
-    ).toBeVisible();
-    await expect(
-      page.getByRole("heading", { name: "Premium", level: 3 }),
-    ).toBeVisible();
-    await expect(page.getByText("$ 15.000")).toBeVisible();
+    const select = page.getByRole("combobox");
+    await expect(select).toBeVisible();
+    await expect(select.locator("option")).toContainText([
+      "1 chance — $ 15.000",
+      "3 chances — $ 35.000",
+    ]);
+    await expect(page.getByText("$ 15.000", { exact: true })).toBeVisible();
   });
 
   test("shows the lottery authorization and escribano data in Transparencia (spec.md Scenario: Visitante ve confianza verificable)", async ({

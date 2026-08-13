@@ -25,6 +25,7 @@ const validFormData = (overrides: Record<string, string> = {}) => {
     numberCap: "500",
     prizeTitle: "TV 55",
     drawDate: "2026-09-30T21:00",
+    tiers: JSON.stringify([{ numbersGranted: 1, priceArs: 15000 }]),
     ...overrides,
   };
   const formData = new FormData();
@@ -59,6 +60,7 @@ describe("createEditionAction", () => {
     const result = await createEditionAction({ status: "idle" }, validFormData(), {
       requireAdmin: vi.fn().mockResolvedValue(adminUser()),
       create,
+      createTiers: vi.fn().mockResolvedValue(undefined),
       getClient: async () => ({}) as never,
       doRevalidate,
     });
@@ -83,6 +85,44 @@ describe("createEditionAction", () => {
     expect(result).toEqual({ status: "error", formError: "Ya hay una edición abierta." });
   });
 
+  it("returns a form error and never creates the edition when tiers are missing/invalid", async () => {
+    const create = vi.fn();
+
+    const result = await createEditionAction(
+      { status: "idle" },
+      validFormData({ tiers: "[]" }),
+      {
+        requireAdmin: vi.fn().mockResolvedValue(adminUser()),
+        create,
+        getClient: async () => ({}) as never,
+        doRevalidate: vi.fn(),
+      },
+    );
+
+    expect(result.status).toBe("error");
+    expect(create).not.toHaveBeenCalled();
+  });
+
+  it("still creates the edition and returns success with a warning when saving tiers fails", async () => {
+    const create = vi.fn().mockResolvedValue({ success: true, editionId: "edition-1" });
+    const createTiers = vi.fn().mockRejectedValue(new Error("No pudimos guardar las opciones de chances."));
+    const doRevalidate = vi.fn();
+
+    const result = await createEditionAction({ status: "idle" }, validFormData(), {
+      requireAdmin: vi.fn().mockResolvedValue(adminUser()),
+      create,
+      createTiers,
+      getClient: async () => ({}) as never,
+      doRevalidate,
+    });
+
+    expect(result).toEqual({
+      status: "success",
+      warning: "No pudimos guardar las opciones de chances.",
+    });
+    expect(doRevalidate).toHaveBeenCalledWith("/admin/ediciones");
+  });
+
   it("skips the image upload entirely when no file was provided", async () => {
     const create = vi.fn().mockResolvedValue({ success: true, editionId: "edition-1" });
     const uploadImage = vi.fn();
@@ -90,6 +130,7 @@ describe("createEditionAction", () => {
     const result = await createEditionAction({ status: "idle" }, validFormData(), {
       requireAdmin: vi.fn().mockResolvedValue(adminUser()),
       create,
+      createTiers: vi.fn().mockResolvedValue(undefined),
       uploadImage,
       getClient: async () => ({}) as never,
       doRevalidate: vi.fn(),
@@ -109,6 +150,7 @@ describe("createEditionAction", () => {
     const result = await createEditionAction({ status: "idle" }, formData, {
       requireAdmin: vi.fn().mockResolvedValue(adminUser()),
       create,
+      createTiers: vi.fn().mockResolvedValue(undefined),
       uploadImage,
       getClient: async () => ({}) as never,
       doRevalidate,
@@ -129,6 +171,7 @@ describe("createEditionAction", () => {
     await createEditionAction({ status: "idle" }, validFormData({ status: "draft" }), {
       requireAdmin: vi.fn().mockResolvedValue(adminUser()),
       create,
+      createTiers: vi.fn().mockResolvedValue(undefined),
       getClient: async () => ({}) as never,
       doRevalidate: vi.fn(),
     });
@@ -148,6 +191,7 @@ describe("createEditionAction", () => {
     const result = await createEditionAction({ status: "idle" }, formData, {
       requireAdmin: vi.fn().mockResolvedValue(adminUser()),
       create,
+      createTiers: vi.fn().mockResolvedValue(undefined),
       uploadImage,
       getClient: async () => ({}) as never,
       doRevalidate: vi.fn(),

@@ -43,10 +43,10 @@ export default async function AdminLayout({
         <div className="mx-auto flex max-w-6xl items-center gap-6 px-6 py-4">
           <Link href="/admin" className="flex items-center gap-2" aria-label="Sorteapp — Panel admin">
             <Image
-              src="/sorteapp-logo-transparent.png"
+              src="/logo.png"
               alt=""
-              width={737}
-              height={424}
+              width={497}
+              height={401}
               className="h-7 w-auto"
             />
             <span className="font-display text-lg text-champagne">Panel admin</span>

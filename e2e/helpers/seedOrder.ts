@@ -11,7 +11,8 @@ export interface SeedOrderInput {
   method: "mp" | "transfer";
   status: "pending" | "approved" | "rejected" | "expired";
   amountArs: number;
-  tierKey?: string;
+  /** Tiers are per-edition now (change: edition-tiers) — defaults to 3, matching the old "plus" tier's numbers_granted. */
+  numbersGranted?: number;
 }
 
 /**
@@ -23,13 +24,17 @@ export interface SeedOrderInput {
  * e2e assert exact totals across every method/status combination without
  * driving 4 separate real checkout (one of them a real Mercado Pago
  * redirect) flows through the UI.
+ *
+ * Also upserts the `tier` row itself (`on conflict (edition_id,
+ * numbers_granted)`), since tiers are per-edition now and this helper is the
+ * only thing guaranteeing one exists for `editionId`/`numbersGranted`.
  */
 export function seedOrder({
   editionId,
   method,
   status,
   amountArs,
-  tierKey = "plus",
+  numbersGranted = 3,
 }: SeedOrderInput): void {
   const email = `seed.${Date.now()}.${Math.random().toString(36).slice(2)}@example.com`;
   const decidedAt = status === "pending" ? "null" : "now()";
@@ -48,15 +53,21 @@ export function seedOrder({
         now(), now(), '', '', '', ''
       )
       returning id
+    ),
+    tier_row as (
+      insert into tier (edition_id, numbers_granted, price_ars)
+      values ('${editionId}', ${numbersGranted}, ${amountArs})
+      on conflict (edition_id, numbers_granted) do update set price_ars = excluded.price_ars
+      returning id
     )
     insert into "order" (
-      user_id, edition_id, tier_key, method, status, amount_ars,
+      user_id, edition_id, tier_id, method, status, amount_ars,
       buyer_name, buyer_email, buyer_dni, buyer_phone, created_at, decided_at
     )
     select
-      new_user.id, '${editionId}', '${tierKey}', '${method}', '${status}', ${amountArs},
+      new_user.id, '${editionId}', tier_row.id, '${method}', '${status}', ${amountArs},
       'Seed Buyer', '${email}', '00000000', '+5491100000000', now(), ${decidedAt}
-    from new_user;
+    from new_user, tier_row;
   `;
 
   execFileSync("psql", [DB_URL, "-v", "ON_ERROR_STOP=1", "-c", sql], {

@@ -56,7 +56,7 @@ export function HeroPrize({ prize }: HeroPrizeProps) {
             href="#tiers"
             className="mt-8 inline-flex items-center justify-center rounded-lg bg-champagne px-6 py-3 font-sans text-sm font-semibold text-ink transition hover:opacity-90"
           >
-            Comprar mi número
+            Comprando el curso ya participas!!
           </a>
         </div>
 
@@ -68,7 +68,7 @@ export function HeroPrize({ prize }: HeroPrizeProps) {
             alt={prize.imageAlt}
             fill
             sizes="(min-width: 640px) 40vw, 90vw"
-            className="object-cover"
+            className="object-contain"
             priority
           />
         </figure>

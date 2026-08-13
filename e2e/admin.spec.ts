@@ -18,8 +18,9 @@ test.describe("Admin panel", () => {
     createAdminUser(adminEmail, adminPassword);
 
     const buyerName = "Comprador Admin Test";
+    const { tierIds } = ensureOpenEdition();
 
-    await page.goto("/checkout/inicial");
+    await page.goto(`/checkout/${tierIds.oneChance}`);
     await page.getByLabel(/nombre y apellido/i).fill(buyerName);
     await page.getByLabel(/^email$/i).fill(`buyer.${Date.now()}@example.com`);
     await page.getByLabel(/dni/i).fill("30555666");
@@ -108,8 +109,9 @@ test.describe("Admin panel", () => {
     // — a repeated static value would collide with orders left by prior runs
     // against this same persistent local DB.
     const buyerDni = String(Date.now()).slice(-8);
+    const { tierIds } = ensureOpenEdition();
 
-    await page.goto("/checkout/inicial");
+    await page.goto(`/checkout/${tierIds.oneChance}`);
     await page.getByLabel(/nombre y apellido/i).fill(buyerName);
     await page.getByLabel(/^email$/i).fill(buyerEmail);
     await page.getByLabel(/dni/i).fill(buyerDni);
@@ -131,14 +133,14 @@ test.describe("Admin panel", () => {
     await page.goto(`/admin/compradores?q=${encodeURIComponent(buyerEmail)}`);
     await expect(page.getByRole("row")).toHaveCount(2);
     const emailRow = page.getByRole("row").nth(1);
-    await expect(emailRow).toContainText("transfer");
-    await expect(emailRow).toContainText("pending");
+    await expect(emailRow).toContainText("Transferencia");
+    await expect(emailRow).toContainText("Pendiente");
 
     await page.goto(`/admin/compradores?q=${buyerDni}`);
     await expect(page.getByRole("row")).toHaveCount(2);
     const dniRow = page.getByRole("row").nth(1);
-    await expect(dniRow).toContainText("transfer");
-    await expect(dniRow).toContainText("pending");
+    await expect(dniRow).toContainText("Transferencia");
+    await expect(dniRow).toContainText("Pendiente");
   });
 
   test("admin sees revenue totals matching seeded orders across methods and statuses", async ({
@@ -238,6 +240,8 @@ test.describe("Admin panel", () => {
     await page.getByLabel(/fecha de sorteo/i).fill("2099-06-30T21:00");
     await page.getByLabel(/^premio$/i).fill(draftPrizeTitle);
     await page.getByLabel(/^estado$/i).selectOption("draft");
+    await page.getByLabel(/costo del premio/i).fill("3000000");
+    await page.getByRole("button", { name: /sugerir precios/i }).click();
     await page.getByRole("button", { name: /crear edición/i }).click();
 
     const draftRow = page.getByRole("row").filter({ hasText: draftPrizeTitle });

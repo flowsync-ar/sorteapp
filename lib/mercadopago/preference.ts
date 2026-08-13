@@ -22,7 +22,8 @@ export class MercadoPagoPreferenceError extends Error {
 
 export interface OrderForPreference {
   id: string;
-  tierKey: string;
+  tierId: string;
+  numbersGranted: number;
   amountArs: number;
   buyerName: string;
   buyerEmail: string;
@@ -67,8 +68,8 @@ export async function createPreferenceForOrder(
         notification_url: notificationUrl,
         items: [
           {
-            id: order.tierKey,
-            title: `Sorteo — tier ${order.tierKey}`,
+            id: order.tierId,
+            title: `Sorteo — ${order.numbersGranted} chance${order.numbersGranted > 1 ? "s" : ""}`,
             quantity: 1,
             unit_price: order.amountArs,
             currency_id: "ARS",

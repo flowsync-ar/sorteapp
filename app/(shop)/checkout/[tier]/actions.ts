@@ -22,16 +22,18 @@ interface CreateOrderOverrides {
 }
 
 /**
- * Server action bound to a tier key from `app/(shop)/checkout/[tier]/page.tsx`
- * (`createOrder.bind(null, tier)`), per design.md
+ * Server action bound to a tier id from `app/(shop)/checkout/[tier]/page.tsx`
+ * (`createOrder.bind(null, tierId)`), per design.md
  * `(shop)/checkout/[tier]/ # tier detail + start checkout (server action)`.
+ * Tiers are per-edition now (change: edition-tiers) — `tierId` is
+ * `tier.id` (uuid), not the old global `key` string.
  *
  * PR5 scope only: creates the order in `pending` status and redirects to a
  * placeholder page per payment method. Real Mercado Pago preference
  * creation (PR6) and real comprobante upload (PR7) are NOT wired here.
  */
 export async function createOrder(
-  tierKey: string,
+  tierId: string,
   _prevState: CheckoutFormState,
   formData: FormData,
   overrides: CreateOrderOverrides = {},
@@ -62,8 +64,8 @@ export async function createOrder(
 
   const { data: tier, error: tierError } = await supabase
     .from("tier")
-    .select("key, price_ars")
-    .eq("key", tierKey)
+    .select("id, price_ars")
+    .eq("id", tierId)
     .single();
 
   if (tierError || !tier) {
@@ -116,7 +118,7 @@ export async function createOrder(
     .insert({
       user_id: userId,
       edition_id: edition.id,
-      tier_key: tier.key,
+      tier_id: tier.id,
       method,
       status: "pending",
       amount_ars: amountArs,

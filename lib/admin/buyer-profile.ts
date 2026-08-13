@@ -20,7 +20,7 @@ export interface BuyerOrderView {
   editionYear: number;
   editionStatus: string;
   prizeTitle: string | null;
-  tierKey: string;
+  chances: number;
   amountArs: number;
   method: string;
   status: string;
@@ -35,7 +35,6 @@ interface BuyerOrderRow {
   buyer_name: string;
   buyer_email: string;
   buyer_dni: string;
-  tier_key: string;
   method: string;
   status: string;
   amount_ars: string | number;
@@ -46,6 +45,7 @@ interface BuyerOrderRow {
     status: string;
     prize_title: string | null;
   } | null;
+  tier: { numbers_granted: number } | null;
   raffle_number: Array<{ number: number }> | null;
 }
 
@@ -68,7 +68,7 @@ export async function findBuyerOrders(
   const { data, error } = await client
     .from("order")
     .select(
-      "id, buyer_name, buyer_email, buyer_dni, tier_key, method, status, amount_ars, created_at, raffle_edition:edition_id(month,year,status,prize_title), raffle_number(number)",
+      "id, buyer_name, buyer_email, buyer_dni, method, status, amount_ars, created_at, raffle_edition:edition_id(month,year,status,prize_title), tier:tier_id(numbers_granted), raffle_number(number)",
     )
     .or(`buyer_email.eq.${normalized},buyer_dni.eq.${normalized}`)
     .order("created_at", { ascending: false });
@@ -88,7 +88,7 @@ export async function findBuyerOrders(
     editionYear: row.raffle_edition?.year ?? 0,
     editionStatus: row.raffle_edition?.status ?? "",
     prizeTitle: row.raffle_edition?.prize_title ?? null,
-    tierKey: row.tier_key,
+    chances: row.tier?.numbers_granted ?? 0,
     amountArs: Number(row.amount_ars),
     method: row.method,
     status: row.status,

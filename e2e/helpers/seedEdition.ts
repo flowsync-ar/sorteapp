@@ -4,6 +4,23 @@ const DB_URL =
   process.env.SUPABASE_DB_URL ??
   "postgresql://postgres:postgres@127.0.0.1:54322/postgres";
 
+export interface EnsureOpenEditionResult {
+  id: string;
+  tierIds: {
+    /** 1 chance / $15.000 — same numbers the old "inicial" tier had. */
+    oneChance: string;
+    /** 3 chances / $35.000 — same numbers the old "plus" tier had. */
+    threeChances: string;
+  };
+}
+
+function queryOne(sql: string): string {
+  const output = execFileSync("psql", [DB_URL, "-v", "ON_ERROR_STOP=1", "-t", "-A", "-c", sql], {
+    stdio: "pipe",
+  });
+  return output.toString().trim().split("\n")[0]!.trim();
+}
+
 /**
  * Test-only helper: makes sure exactly one `open` edition exists before an
  * e2e run (`createOrder`, `app/(shop)/checkout/[tier]/actions.ts`, requires
@@ -12,17 +29,43 @@ const DB_URL =
  * member-area e2e spec) — this helper makes that step explicit and
  * idempotent (`where not exists (...)`) so PR9's own admin spec doesn't
  * depend on a manual step having already been run.
+ *
+ * Tiers are per-edition now (change: edition-tiers), so this also upserts
+ * two baseline tiers for whichever edition ends up `open` — same
+ * price/chance numbers the old global "inicial"/"plus" tiers had, so every
+ * spec written against those numbers keeps working unchanged.
  */
-export function ensureOpenEdition(prizeTitle = "Premio E2E"): void {
-  const sql = `
-    insert into raffle_edition (month, year, status, number_cap, prize_title)
-    select 1, 2099, 'open', 500, '${prizeTitle}'
-    where not exists (select 1 from raffle_edition where status = 'open');
-  `;
+export function ensureOpenEdition(prizeTitle = "Premio E2E"): EnsureOpenEditionResult {
+  execFileSync(
+    "psql",
+    [
+      DB_URL,
+      "-v",
+      "ON_ERROR_STOP=1",
+      "-c",
+      `insert into raffle_edition (month, year, status, number_cap, prize_title)
+       select 1, 2099, 'open', 500, '${prizeTitle}'
+       where not exists (select 1 from raffle_edition where status = 'open');`,
+    ],
+    { stdio: "pipe" },
+  );
 
-  execFileSync("psql", [DB_URL, "-v", "ON_ERROR_STOP=1", "-c", sql], {
-    stdio: "pipe",
-  });
+  const editionId = queryOne(`select id from raffle_edition where status = 'open' limit 1;`);
+
+  const oneChanceId = queryOne(`
+    insert into tier (edition_id, numbers_granted, price_ars)
+    values ('${editionId}', 1, 15000)
+    on conflict (edition_id, numbers_granted) do update set price_ars = excluded.price_ars
+    returning id;
+  `);
+  const threeChancesId = queryOne(`
+    insert into tier (edition_id, numbers_granted, price_ars)
+    values ('${editionId}', 3, 35000)
+    on conflict (edition_id, numbers_granted) do update set price_ars = excluded.price_ars
+    returning id;
+  `);
+
+  return { id: editionId, tierIds: { oneChance: oneChanceId, threeChances: threeChancesId } };
 }
 
 /**

@@ -25,7 +25,7 @@ function fakeSupabase(options: {
   );
   const orderBuilder = makeQueryBuilder(
     options.orderUpdateResult ?? {
-      data: { id: "order-1", tier_key: "inicial" },
+      data: { id: "order-1", tier_id: "tier-1" },
       error: null,
     },
   );

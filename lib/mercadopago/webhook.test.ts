@@ -100,7 +100,7 @@ describe("processMercadoPagoWebhookNotification", () => {
     const assign = vi.fn().mockResolvedValue({ numbers: [123456], soldOut: false });
     let updatePayload: Record<string, unknown> | undefined;
     const orderBuilder = fakeOrderBuilder(
-      { data: { id: "order-1", tier_key: "inicial" }, error: null },
+      { data: { id: "order-1", tier_id: "tier-1" }, error: null },
       (p) => {
         updatePayload = p as Record<string, unknown>;
       },
@@ -166,7 +166,7 @@ describe("processMercadoPagoWebhookNotification", () => {
     const assign = vi.fn();
     let updatePayload: Record<string, unknown> | undefined;
     const orderBuilder = fakeOrderBuilder(
-      { data: { id: "order-2", tier_key: "plus" }, error: null },
+      { data: { id: "order-2", tier_id: "tier-2" }, error: null },
       (p) => {
         updatePayload = p as Record<string, unknown>;
       },

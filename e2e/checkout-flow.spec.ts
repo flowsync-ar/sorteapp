@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { ensureOpenEdition } from "./helpers/seedEdition";
 
 // PR5 batch scope (tasks.md 5.3, spec.md §3 "Flujo de selección"): covers
 // tier selection on the landing through order creation, for BOTH payment
@@ -15,24 +16,34 @@ import { expect, test } from "@playwright/test";
 // not have (no internet access). A real MP sandbox run is left as a manual
 // verification step for whoever configures real credentials.
 test.describe("Checkout flow", () => {
+  // Tiers are per-edition now (change: edition-tiers) — `ensureOpenEdition()`
+  // upserts the same $15.000/1-chance and $35.000/3-chances tiers the old
+  // global "inicial"/"plus" tiers had, so every price assertion below stays
+  // unchanged; only the checkout URL is a uuid now, not a name.
+  let tierIds: { oneChance: string; threeChances: string };
+
+  test.beforeEach(() => {
+    tierIds = ensureOpenEdition().tierIds;
+  });
+
   test("selecting a tier on the landing navigates to its checkout page", async ({
     page,
   }) => {
     await page.goto("/");
 
-    await page.getByRole("radio", { name: "Inicial" }).check();
+    await page.getByRole("combobox").selectOption({ label: "1 chance — $ 15.000" });
     await page.getByRole("link", { name: /continuar/i }).click();
 
-    await expect(page).toHaveURL(/\/checkout\/inicial$/);
+    await expect(page).toHaveURL(new RegExp(`/checkout/${tierIds.oneChance}$`));
     await expect(
-      page.getByRole("heading", { level: 1, name: "Inicial" }),
+      page.getByRole("heading", { level: 1, name: "1 chance" }),
     ).toBeVisible();
   });
 
   test("buying with Mercado Pago creates a pending order and shows a graceful error when Mercado Pago is unreachable/unconfigured", async ({
     page,
   }) => {
-    await page.goto("/checkout/inicial");
+    await page.goto(`/checkout/${tierIds.oneChance}`);
 
     await page.getByLabel(/nombre y apellido/i).fill("Martín García");
     await page.getByLabel(/^email$/i).fill(`martin.${Date.now()}@example.com`);
@@ -61,7 +72,7 @@ test.describe("Checkout flow", () => {
   test("buying with bank transfer applies the discount and redirects to the comprobante placeholder", async ({
     page,
   }) => {
-    await page.goto("/checkout/plus");
+    await page.goto(`/checkout/${tierIds.threeChances}`);
 
     await page.getByLabel(/nombre y apellido/i).fill("Rocío Álvarez");
     await page.getByLabel(/^email$/i).fill(`rocio.${Date.now()}@example.com`);
@@ -81,12 +92,12 @@ test.describe("Checkout flow", () => {
   test("blocks submission and shows accessible field errors on empty/invalid data", async ({
     page,
   }) => {
-    await page.goto("/checkout/inicial");
+    await page.goto(`/checkout/${tierIds.oneChance}`);
 
     await page.getByLabel(/dni/i).fill("123");
     await page.getByRole("button", { name: /confirmar compra/i }).click();
 
-    await expect(page).toHaveURL(/\/checkout\/inicial$/);
+    await expect(page).toHaveURL(new RegExp(`/checkout/${tierIds.oneChance}$`));
     await expect(page.getByRole("alert").first()).toBeVisible();
     await expect(
       page.getByText(/dni válido/i),

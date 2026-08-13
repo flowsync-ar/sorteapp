@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { simulateOrderApproval } from "./helpers/simulateApproval";
+import { ensureOpenEdition } from "./helpers/seedEdition";
 
 // PR8 batch scope (design.md §1 `(member)/`, spec.md §7 "Member Area"):
 // covers the full loop this batch adds on top of PR5's anonymous guest
@@ -16,7 +17,8 @@ test.describe("Member area", () => {
     const email = `claim.${Date.now()}@example.com`;
     const password = "secret123";
 
-    await page.goto("/checkout/inicial");
+    const { tierIds } = ensureOpenEdition();
+    await page.goto(`/checkout/${tierIds.oneChance}`);
     await page.getByLabel(/nombre y apellido/i).fill("Miembro Test");
     await page.getByLabel(/^email$/i).fill(`comprador.${Date.now()}@example.com`);
     await page.getByLabel(/dni/i).fill("30111222");
@@ -40,7 +42,7 @@ test.describe("Member area", () => {
 
     await expect(page).toHaveURL("/mi-cuenta");
     await expect(page.getByRole("heading", { name: /reclamá tu cuenta/i })).toBeVisible();
-    await expect(page.getByText(/inicial/i).first()).toBeVisible();
+    await expect(page.getByText(/1 chance/i).first()).toBeVisible();
     await expect(page.getByText(/bienvenida y primeros pasos/i)).toBeVisible();
 
     await page.getByLabel(/^email$/i).fill(email);

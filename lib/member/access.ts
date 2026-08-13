@@ -13,7 +13,7 @@ export class MemberAccessError extends Error {
 
 export interface MemberOrderView {
   id: string;
-  tierKey: string;
+  chances: number;
   status: string;
   method: string;
   amountArs: number;
@@ -47,7 +47,7 @@ export async function getMemberAccountOverview(
 ): Promise<MemberAccountOverview> {
   const { data: orders, error: ordersError } = await client
     .from("order")
-    .select("id, tier_key, status, method, amount_ars")
+    .select("id, status, method, amount_ars, tier:tier_id(numbers_granted)")
     .eq("user_id", userId)
     .order("created_at", { ascending: false });
 
@@ -58,12 +58,12 @@ export async function getMemberAccountOverview(
     );
   }
 
-  const orderRows = (orders ?? []) as Array<{
+  const orderRows = (orders ?? []) as unknown as Array<{
     id: string;
-    tier_key: string;
     status: string;
     method: string;
     amount_ars: string | number;
+    tier: { numbers_granted: number } | null;
   }>;
 
   if (orderRows.length === 0) {
@@ -91,7 +91,7 @@ export async function getMemberAccountOverview(
 
   const views: MemberOrderView[] = orderRows.map((order) => ({
     id: order.id,
-    tierKey: order.tier_key,
+    chances: order.tier?.numbers_granted ?? 0,
     status: order.status,
     method: order.method,
     amountArs: Number(order.amount_ars),

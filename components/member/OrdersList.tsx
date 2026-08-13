@@ -33,7 +33,7 @@ export function OrdersList({ orders }: OrdersListProps) {
   if (orders.length === 0) {
     return (
       <p className="text-sm text-muted-foreground">
-        Todavía no tenés compras. Elegí tu tier desde la página principal.
+        Todavía no tenés compras. Elegí tus chances desde la página principal.
       </p>
     );
   }
@@ -46,7 +46,9 @@ export function OrdersList({ orders }: OrdersListProps) {
           className="rounded-xl border border-surface bg-surface/40 p-5"
         >
           <div className="flex items-center justify-between">
-            <span className="font-semibold text-foreground">{order.tierKey}</span>
+            <span className="font-semibold text-foreground">
+              {order.chances} {order.chances === 1 ? "chance" : "chances"}
+            </span>
             <span className="text-sm text-muted-foreground">
               {STATUS_LABEL[order.status] ?? order.status}
             </span>

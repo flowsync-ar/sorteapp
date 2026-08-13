@@ -49,13 +49,19 @@ export default async function MercadoPagoRedirectPage({ params }: PageProps) {
 
   const { data: order } = await supabase
     .from("order")
-    .select("id, tier_key, amount_ars, status, buyer_name, buyer_email")
+    .select("id, tier_id, amount_ars, status, buyer_name, buyer_email, tier:tier_id(numbers_granted)")
     .eq("id", orderId)
     .maybeSingle();
 
   if (!order) {
     notFound();
   }
+
+  // Untyped Supabase client (no generated Database types, project
+  // convention) infers a to-one nested select as an array — same
+  // `as unknown as X` escape hatch `lib/admin/buyer-profile.ts` uses.
+  const tier = order.tier as unknown as { numbers_granted: number } | null;
+  const chances = tier?.numbers_granted ?? 0;
 
   if (order.status !== "pending") {
     const copy = DECIDED_STATUS_COPY[order.status] ?? {
@@ -64,7 +70,7 @@ export default async function MercadoPagoRedirectPage({ params }: PageProps) {
     };
     return (
       <OrderPlaceholder
-        order={{ ...order, amount_ars: Number(order.amount_ars) }}
+        order={{ id: order.id, chances, amount_ars: Number(order.amount_ars), status: order.status }}
         title={copy.title}
         noticeText={copy.notice}
       >
@@ -82,7 +88,8 @@ export default async function MercadoPagoRedirectPage({ params }: PageProps) {
   try {
     const result = await createPreferenceForOrder({
       id: order.id,
-      tierKey: order.tier_key,
+      tierId: order.tier_id,
+      numbersGranted: chances,
       amountArs: Number(order.amount_ars),
       buyerName: order.buyer_name,
       buyerEmail: order.buyer_email,
@@ -95,7 +102,7 @@ export default async function MercadoPagoRedirectPage({ params }: PageProps) {
         <CheckoutErrorNotice
           title="Pago con Mercado Pago"
           message="No pudimos iniciar el pago con Mercado Pago en este momento. Tu orden sigue pendiente — probá de nuevo en unos minutos."
-          retryHref={`/checkout/${order.tier_key}`}
+          retryHref={`/checkout/${order.tier_id}`}
         />
       );
     }

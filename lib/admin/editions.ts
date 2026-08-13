@@ -92,6 +92,13 @@ export interface CreateEditionInput {
    * backward-compatible with every caller that predates this field.
    */
   status?: "draft" | "open";
+  /**
+   * Calculator input memory (change: edition-tiers) — the prize cost the
+   * admin typed to generate the suggested tier table. Purely informational
+   * (lets the calculator re-seed itself if the admin re-opens this edition);
+   * never used to compute anything at read time.
+   */
+  prizeCostArs?: number;
 }
 
 export type CreateEditionResult =
@@ -107,11 +114,6 @@ export type CreateEditionResult =
  * itself (a check-then-insert race would be a TOCTOU bug); it just catches
  * the resulting `23505` and turns it into a message the admin UI can show
  * directly, per this batch's own instruction.
- *
- * Deviation (documented, not silent): design.md's schema has no per-edition
- * tier association (`tier` is a global catalog, an existing PR2/PR5
- * decision) — "tiers asociados" from this batch's own scope note is not
- * modeled as a relation here.
  */
 export async function createEdition(
   input: CreateEditionInput,
@@ -126,6 +128,7 @@ export async function createEdition(
       number_cap: input.numberCap,
       prize_title: input.prizeTitle,
       draw_date: input.drawDateIso,
+      prize_cost_ars: input.prizeCostArs ?? null,
     })
     .select("id")
     .single();
@@ -141,6 +144,83 @@ export async function createEdition(
   }
 
   return { success: true, editionId: data!.id as string };
+}
+
+export interface CreateEditionTierInput {
+  numbersGranted: number;
+  priceArs: number;
+}
+
+/**
+ * Persists the edition's chance tiers (change: edition-tiers calculator).
+ * Same non-atomic, best-effort pattern as `uploadPrizeImage` — the edition
+ * needs an id before its tiers can reference it (`tier.edition_id` FK), so
+ * this can only run after `createEdition` succeeds, and a failure here does
+ * NOT roll back the edition. Unlike the prize photo, though, tiers are not
+ * decorative: without them the edition has nothing to sell, so the caller
+ * surfaces this failure as a loud warning, not a quiet one.
+ */
+export async function createEditionTiers(
+  editionId: string,
+  tiers: CreateEditionTierInput[],
+  client: EditionsQueryClient,
+): Promise<void> {
+  const { error } = await client.from("tier").insert(
+    tiers.map((tier) => ({
+      edition_id: editionId,
+      numbers_granted: tier.numbersGranted,
+      price_ars: tier.priceArs,
+    })),
+  );
+
+  if (error) {
+    throw new AdminEditionsError("No pudimos guardar las opciones de chances.", error);
+  }
+}
+
+export type ValidateTierRowsResult =
+  | { success: true; data: CreateEditionTierInput[] }
+  | { success: false; error: string };
+
+/**
+ * Validates the calculator's submitted tier rows (`TierPricingCalculator`
+ * serializes its editable table into a single JSON form field). Kept
+ * separate from `validateCreateEditionInput` because the tiers field isn't
+ * a plain string input.
+ */
+export function validateTierRows(raw: string): ValidateTierRowsResult {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    return { success: false, error: "Las opciones de chances no tienen un formato válido." };
+  }
+
+  if (!Array.isArray(parsed) || parsed.length === 0) {
+    return { success: false, error: "Agregá al menos una opción de chances." };
+  }
+
+  const data: CreateEditionTierInput[] = [];
+  const seenChances = new Set<number>();
+
+  for (const item of parsed) {
+    const numbersGranted = Number((item as { numbersGranted?: unknown })?.numbersGranted);
+    const priceArs = Number((item as { priceArs?: unknown })?.priceArs);
+
+    if (!Number.isInteger(numbersGranted) || numbersGranted <= 0) {
+      return { success: false, error: "Cada opción necesita una cantidad de chances válida." };
+    }
+    if (!Number.isFinite(priceArs) || priceArs <= 0) {
+      return { success: false, error: "Cada opción necesita un precio válido." };
+    }
+    if (seenChances.has(numbersGranted)) {
+      return { success: false, error: "No puede haber dos opciones con la misma cantidad de chances." };
+    }
+    seenChances.add(numbersGranted);
+    data.push({ numbersGranted, priceArs });
+  }
+
+  return { success: true, data };
 }
 
 export type CloseEditionResult = { applied: boolean };
@@ -235,6 +315,8 @@ export function validateCreateEditionInput(input: {
   drawDate: string;
   /** Prize catalog (work unit 3). Any other value quietly falls back to `"open"`. */
   status?: string;
+  /** Calculator input memory — blank/invalid quietly omits it, never blocks submission. */
+  prizeCostArs?: string;
 }): CreateEditionValidation {
   const errors: CreateEditionErrors = {};
 
@@ -269,9 +351,11 @@ export function validateCreateEditionInput(input: {
   }
 
   const status: CreateEditionInput["status"] = input.status === "draft" ? "draft" : "open";
+  const parsedCost = Number(input.prizeCostArs);
+  const prizeCostArs = Number.isFinite(parsedCost) && parsedCost > 0 ? parsedCost : undefined;
 
   return {
     success: true,
-    data: { month, year, numberCap, prizeTitle, drawDateIso, status },
+    data: { month, year, numberCap, prizeTitle, drawDateIso, status, prizeCostArs },
   };
 }

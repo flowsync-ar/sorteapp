@@ -93,8 +93,10 @@ function ReceiptRow({ receipt, onReview }: ReceiptRowProps) {
           <p className="font-semibold text-foreground">{receipt.buyerName}</p>
           <p className="text-sm text-muted-foreground">{receipt.buyerEmail}</p>
           <p className="mt-1 text-sm text-muted-foreground">
-            Tier: <span className="text-foreground">{receipt.tierKey}</span> ·{" "}
-            {formatArs(receipt.amountArs)}
+            <span className="text-foreground">
+              {receipt.chances} {receipt.chances === 1 ? "chance" : "chances"}
+            </span>{" "}
+            · {formatArs(receipt.amountArs)}
           </p>
           <a
             href={receipt.signedUrl}

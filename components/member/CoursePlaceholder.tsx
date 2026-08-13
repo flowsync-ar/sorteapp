@@ -2,20 +2,20 @@ import { placeholderCourseContent } from "@/lib/member/content";
 
 interface CoursePlaceholderProps {
   hasCourseAccess: boolean;
-  tierKeys: Array<"inicial" | "plus" | "premium">;
 }
 
 /**
  * Course content section (tasks.md PR8.3–8.4, spec.md §7 "Acceso post-pago").
  * Access gate lives in `lib/member/access.ts` — this component only renders
- * the two branches: locked (no `approved` order yet) or unlocked
- * (placeholder lessons per purchased tier, `lib/member/content.ts`).
+ * the two branches: locked (no `approved` order yet) or unlocked (the fixed
+ * placeholder bundle, `lib/member/content.ts` — same for every buyer
+ * regardless of which chance tier they bought, change: edition-tiers).
  *
  * `hasCourseAccess=false` is deliberately rendered even for a logged-in
  * user with pending/rejected orders only (spec.md §7: "no alcanza con
  * estar logueado").
  */
-export function CoursePlaceholder({ hasCourseAccess, tierKeys }: CoursePlaceholderProps) {
+export function CoursePlaceholder({ hasCourseAccess }: CoursePlaceholderProps) {
   if (!hasCourseAccess) {
     return (
       <div
@@ -28,31 +28,18 @@ export function CoursePlaceholder({ hasCourseAccess, tierKeys }: CoursePlacehold
     );
   }
 
-  const uniqueTiers = Array.from(new Set(tierKeys));
-
   return (
-    <div className="space-y-6">
-      {uniqueTiers.map((tierKey) => (
-        <div key={tierKey}>
-          <h3 className="font-display text-xl text-foreground capitalize">
-            Curso {tierKey}
-          </h3>
-          <ul className="mt-3 space-y-2">
-            {placeholderCourseContent[tierKey].map((lesson) => (
-              <li
-                key={lesson.title}
-                className="rounded-lg border border-surface bg-surface/40 p-4"
-              >
-                <p className="font-semibold text-foreground">{lesson.title}</p>
-                {/* TODO: contenido real del curso — reemplazar por el reproductor real. */}
-                <p className="mt-1 text-xs text-muted-foreground">
-                  {lesson.videoUrl}
-                </p>
-              </li>
-            ))}
-          </ul>
-        </div>
+    <ul className="space-y-2">
+      {placeholderCourseContent.map((lesson) => (
+        <li
+          key={lesson.title}
+          className="rounded-lg border border-surface bg-surface/40 p-4"
+        >
+          <p className="font-semibold text-foreground">{lesson.title}</p>
+          {/* TODO: contenido real del curso — reemplazar por el reproductor real. */}
+          <p className="mt-1 text-xs text-muted-foreground">{lesson.videoUrl}</p>
+        </li>
       ))}
-    </div>
+    </ul>
   );
 }

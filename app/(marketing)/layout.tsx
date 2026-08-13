@@ -19,10 +19,10 @@ export default function MarketingLayout({
         <div className="mx-auto flex max-w-5xl items-center justify-between">
           <Link href="/" className="flex items-center" aria-label="Sorteapp">
             <Image
-              src="/sorteapp-logo-transparent.png"
+              src="/logo.png"
               alt="Sorteapp"
-              width={737}
-              height={424}
+              width={497}
+              height={401}
               priority
               className="h-12 w-auto"
             />

@@ -46,8 +46,20 @@ describe("getMemberAccountOverview", () => {
     const { client } = fakeSupabase({
       orders: {
         data: [
-          { id: "order-1", tier_key: "inicial", status: "pending", method: "transfer", amount_ars: "13500" },
-          { id: "order-2", tier_key: "plus", status: "rejected", method: "mp", amount_ars: "35000" },
+          {
+            id: "order-1",
+            status: "pending",
+            method: "transfer",
+            amount_ars: "13500",
+            tier: { numbers_granted: 1 },
+          },
+          {
+            id: "order-2",
+            status: "rejected",
+            method: "mp",
+            amount_ars: "35000",
+            tier: { numbers_granted: 3 },
+          },
         ],
         error: null,
       },
@@ -63,7 +75,13 @@ describe("getMemberAccountOverview", () => {
     const { client } = fakeSupabase({
       orders: {
         data: [
-          { id: "order-1", tier_key: "premium", status: "approved", method: "mp", amount_ars: "60000" },
+          {
+            id: "order-1",
+            status: "approved",
+            method: "mp",
+            amount_ars: "60000",
+            tier: { numbers_granted: 6 },
+          },
         ],
         error: null,
       },
@@ -82,7 +100,7 @@ describe("getMemberAccountOverview", () => {
     expect(result.orders).toEqual([
       {
         id: "order-1",
-        tierKey: "premium",
+        chances: 6,
         status: "approved",
         method: "mp",
         amountArs: 60000,

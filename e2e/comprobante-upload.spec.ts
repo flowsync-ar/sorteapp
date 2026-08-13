@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { ensureOpenEdition } from "./helpers/seedEdition";
 
 // PR7 batch scope (design.md §5 "Comprobante flow", spec.md §5 "Comprobante
 // Manual"): covers the real upload flow against a real local Supabase
@@ -9,7 +10,8 @@ test.describe("Comprobante upload flow", () => {
   test("uploading a valid comprobante moves the order to 'pending review' and blocks re-upload while it's under review", async ({
     page,
   }) => {
-    await page.goto("/checkout/inicial");
+    const { tierIds } = ensureOpenEdition();
+    await page.goto(`/checkout/${tierIds.oneChance}`);
 
     await page.getByLabel(/nombre y apellido/i).fill("Comprobante Test");
     await page
@@ -64,7 +66,8 @@ test.describe("Comprobante upload flow", () => {
   test("blocks an oversized/invalid file client-side with an accessible error before submitting", async ({
     page,
   }) => {
-    await page.goto("/checkout/plus");
+    const { tierIds } = ensureOpenEdition();
+    await page.goto(`/checkout/${tierIds.threeChances}`);
 
     await page.getByLabel(/nombre y apellido/i).fill("Invalido Test");
     await page

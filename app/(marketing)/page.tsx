@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { HeroPrize } from "@/components/marketing/HeroPrize";
 import { HowItWorks } from "@/components/marketing/HowItWorks";
-import { TierCards } from "@/components/marketing/TierCards";
+import { ChanceSelector } from "@/components/marketing/ChanceSelector";
 import { PrizeOfMonth } from "@/components/marketing/PrizeOfMonth";
 import { TrustSection } from "@/components/marketing/TrustSection";
 import { PreviousWinners } from "@/components/marketing/PreviousWinners";
@@ -10,12 +10,12 @@ import { FAQAccordion } from "@/components/marketing/FAQAccordion";
 import { createClient } from "@/lib/supabase/server";
 import { getPublishedWinners } from "@/lib/marketing/winners";
 import { getOpenEditionPrize } from "@/lib/marketing/prize";
+import { getOpenEditionTiers } from "@/lib/marketing/tiers";
 import {
   currentPrize,
   faqItems,
   howItWorksSteps,
   previousWinners,
-  tiers,
   transparency,
 } from "@/lib/marketing/content";
 
@@ -35,9 +35,10 @@ export const metadata: Metadata = {
 // a waterfall.
 export default async function LandingPage() {
   const supabase = await createClient();
-  const [publishedWinners, openEditionPrize] = await Promise.all([
+  const [publishedWinners, openEditionPrize, tiers] = await Promise.all([
     getPublishedWinners(supabase),
     getOpenEditionPrize(supabase),
+    getOpenEditionTiers(supabase),
   ]);
   // Landing shows the 3 most recent winners; /ganadores has the full list.
   const recentWinners = (publishedWinners.length > 0 ? publishedWinners : previousWinners).slice(
@@ -56,7 +57,7 @@ export default async function LandingPage() {
     <>
       <HeroPrize prize={prize} />
       <HowItWorks steps={howItWorksSteps} />
-      <TierCards tiers={tiers} />
+      <ChanceSelector tiers={tiers} />
       <PrizeOfMonth prize={prize} />
       <TrustSection transparency={transparency} />
 

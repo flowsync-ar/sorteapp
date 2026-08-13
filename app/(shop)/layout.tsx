@@ -17,10 +17,10 @@ export default function ShopLayout({
       <header className="border-b border-surface px-6 py-4">
         <Link href="/" className="flex items-center" aria-label="Sorteapp">
           <Image
-            src="/sorteapp-logo-transparent.png"
+            src="/logo.png"
             alt="Sorteapp"
-            width={737}
-            height={424}
+            width={497}
+            height={401}
             priority
             className="h-12 w-auto"
           />

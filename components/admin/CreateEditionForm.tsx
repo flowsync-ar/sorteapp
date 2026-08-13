@@ -3,6 +3,7 @@
 import { useActionState, useId } from "react";
 import type { CreateEditionAction, CreateEditionFormState } from "@/lib/admin/types";
 import { PrizeImageInput } from "./PrizeImageInput";
+import { TierPricingCalculator } from "./TierPricingCalculator";
 
 interface CreateEditionFormProps {
   action: CreateEditionAction;
@@ -144,6 +145,13 @@ export function CreateEditionForm({ action, initialStateOverride }: CreateEditio
           <option value="open">Abierta</option>
           <option value="draft">Borrador (premio futuro)</option>
         </select>
+      </div>
+
+      <div className="sm:col-span-2">
+        <label className="text-sm font-medium text-foreground">Opciones de chances</label>
+        <div className="mt-1">
+          <TierPricingCalculator />
+        </div>
       </div>
 
       <div className="sm:col-span-2">

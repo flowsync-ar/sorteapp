@@ -12,62 +12,6 @@
  * escribano).
  */
 
-export interface Tier {
-  key: "inicial" | "plus" | "premium";
-  name: string;
-  priceArs: number;
-  /** Cantidad de números de 6 cifras que otorga la compra de este tier. */
-  numbersGranted: number;
-  includes: string[];
-  /** % de descuento por pago con transferencia (spec.md 2: "visible"). */
-  transferDiscountPercent: number;
-}
-
-// Precios y numbersGranted deben coincidir con supabase/seed.sql (fuente de
-// verdad para el checkout real, PR5). Este objeto es solo para mostrar el
-// catálogo en la landing.
-export const tiers: Tier[] = [
-  {
-    key: "inicial",
-    name: "Inicial",
-    priceArs: 15000,
-    numbersGranted: 1,
-    transferDiscountPercent: 10,
-    includes: [
-      "1 curso digital a elección del catálogo",
-      "1 número de 6 cifras para el sorteo del mes",
-      "Acceso de por vida al curso elegido",
-    ],
-  },
-  {
-    key: "plus",
-    name: "Plus",
-    priceArs: 35000,
-    numbersGranted: 3,
-    transferDiscountPercent: 10,
-    includes: [
-      "Hasta 3 cursos digitales a elección",
-      "3 números de 6 cifras para el sorteo del mes",
-      "Acceso de por vida a los cursos elegidos",
-      "Certificado de finalización por curso",
-    ],
-  },
-  {
-    key: "premium",
-    name: "Premium",
-    priceArs: 60000,
-    numbersGranted: 6,
-    transferDiscountPercent: 10,
-    includes: [
-      "Acceso a todo el catálogo de cursos digitales",
-      "6 números de 6 cifras para el sorteo del mes",
-      "Acceso de por vida a todos los cursos",
-      "Certificado de finalización por curso",
-      "Soporte prioritario por email",
-    ],
-  },
-];
-
 export interface HowItWorksStep {
   title: string;
   description: string;
@@ -75,9 +19,9 @@ export interface HowItWorksStep {
 
 export const howItWorksSteps: HowItWorksStep[] = [
   {
-    title: "Elegís tu curso",
+    title: "Elegís tus chances",
     description:
-      "Comparás los 3 tiers (Inicial, Plus o Premium) y elegís el que más se ajusta a lo que querés aprender.",
+      "Comparás las opciones de chances disponibles y elegís la que más te conviene.",
   },
   {
     title: "Recibís tu número de 6 cifras",

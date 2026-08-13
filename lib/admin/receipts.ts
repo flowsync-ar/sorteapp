@@ -19,7 +19,7 @@ export interface PendingReceiptView {
   uploadedAt: string;
   buyerName: string;
   buyerEmail: string;
-  tierKey: string;
+  chances: number;
   amountArs: number;
 }
 
@@ -34,8 +34,8 @@ interface PendingReceiptRow {
   order: {
     buyer_name: string;
     buyer_email: string;
-    tier_key: string;
     amount_ars: string | number;
+    tier: { numbers_granted: number } | null;
   } | null;
 }
 
@@ -53,7 +53,7 @@ export async function listPendingReceipts(
   const { data, error } = await client
     .from("receipt")
     .select(
-      "id, order_id, storage_path, uploaded_at, order:order_id(buyer_name, buyer_email, tier_key, amount_ars)",
+      "id, order_id, storage_path, uploaded_at, order:order_id(buyer_name, buyer_email, amount_ars, tier:tier_id(numbers_granted))",
     )
     .eq("status", "pending")
     .order("uploaded_at", { ascending: true });
@@ -71,7 +71,7 @@ export async function listPendingReceipts(
     uploadedAt: row.uploaded_at,
     buyerName: row.order?.buyer_name ?? "",
     buyerEmail: row.order?.buyer_email ?? "",
-    tierKey: row.order?.tier_key ?? "",
+    chances: row.order?.tier?.numbers_granted ?? 0,
     amountArs: Number(row.order?.amount_ars ?? 0),
   }));
 }

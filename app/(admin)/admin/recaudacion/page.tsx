@@ -18,6 +18,13 @@ const STATUS_LABELS: Record<string, string> = {
   expired: "Expirado",
 };
 
+const EDITION_STATUS_LABELS: Record<string, string> = {
+  draft: "Borrador",
+  open: "Abierta",
+  closed: "Cerrada",
+  drawn: "Sorteada",
+};
+
 /**
  * `/admin/recaudacion` (tasks.md admin-panel-v2 work unit 2 "Dashboard de
  * recaudación"). Pure read-only summary — `getRevenueSummary` already did
@@ -66,7 +73,9 @@ export default async function AdminRecaudacionPage() {
                     <td className="py-2 pr-4 text-foreground">
                       {edition.editionMonth}/{edition.editionYear}
                     </td>
-                    <td className="py-2 pr-4 text-muted-foreground">{edition.editionStatus}</td>
+                    <td className="py-2 pr-4 text-muted-foreground">
+                      {EDITION_STATUS_LABELS[edition.editionStatus] ?? edition.editionStatus}
+                    </td>
                     <td className="py-2 pr-4 text-champagne">
                       {formatAmount(edition.totalArs)}
                     </td>

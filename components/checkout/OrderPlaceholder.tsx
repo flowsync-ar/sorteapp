@@ -1,7 +1,7 @@
 interface OrderPlaceholderProps {
   order: {
     id: string;
-    tier_key: string;
+    chances: number;
     amount_ars: number;
     status: string;
   };
@@ -58,8 +58,8 @@ export function OrderPlaceholder({
           <dd className="text-foreground">#{order.id.slice(0, 8)}</dd>
         </div>
         <div className="flex justify-between">
-          <dt>Tier</dt>
-          <dd className="text-foreground">{order.tier_key}</dd>
+          <dt>Chances</dt>
+          <dd className="text-foreground">{order.chances}</dd>
         </div>
         <div className="flex justify-between">
           <dt>Monto</dt>

@@ -9,11 +9,11 @@ describe("OrdersList", () => {
     expect(screen.getByText(/todavía no tenés compras/i)).toBeInTheDocument();
   });
 
-  it("lists each order's tier, status and assigned numbers", () => {
+  it("lists each order's chances, status and assigned numbers", () => {
     const orders: MemberOrderView[] = [
       {
         id: "order-1",
-        tierKey: "premium",
+        chances: 6,
         status: "approved",
         method: "mp",
         amountArs: 60000,
@@ -21,7 +21,7 @@ describe("OrdersList", () => {
       },
       {
         id: "order-2",
-        tierKey: "inicial",
+        chances: 1,
         status: "pending",
         method: "transfer",
         amountArs: 13500,
@@ -31,10 +31,10 @@ describe("OrdersList", () => {
 
     render(<OrdersList orders={orders} />);
 
-    expect(screen.getByText("premium")).toBeInTheDocument();
+    expect(screen.getByText("6 chances")).toBeInTheDocument();
     expect(screen.getByText("004821")).toBeInTheDocument();
     expect(screen.getByText("990001")).toBeInTheDocument();
-    expect(screen.getByText("inicial")).toBeInTheDocument();
+    expect(screen.getByText("1 chance")).toBeInTheDocument();
     expect(screen.getByText(/pendiente/i)).toBeInTheDocument();
   });
 });

@@ -21,7 +21,7 @@ const receipts = [
     uploadedAt: "2026-08-01T00:00:00Z",
     buyerName: "Ana Test",
     buyerEmail: "ana@example.com",
-    tierKey: "plus",
+    chances: 3,
     amountArs: 35000,
     signedUrl: "https://signed.example.com/file.png",
   },
@@ -37,7 +37,7 @@ describe("ReceiptQueue", () => {
     render(<ReceiptQueue receipts={receipts} onReview={vi.fn()} />);
 
     expect(screen.getByText("Ana Test")).toBeInTheDocument();
-    expect(screen.getByText(/plus/i)).toBeInTheDocument();
+    expect(screen.getByText(/3 chances/i)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /ver comprobante/i })).toHaveAttribute(
       "href",
       "https://signed.example.com/file.png",

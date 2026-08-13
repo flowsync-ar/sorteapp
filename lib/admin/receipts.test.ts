@@ -20,9 +20,9 @@ describe("listPendingReceipts", () => {
         order: {
           buyer_name: "Ana Test",
           buyer_email: "ana@example.com",
-          tier_key: "plus",
           amount_ars: "35000",
           method: "transfer",
+          tier: { numbers_granted: 3 },
         },
       },
     ]);
@@ -38,7 +38,7 @@ describe("listPendingReceipts", () => {
         uploadedAt: "2026-08-01T00:00:00Z",
         buyerName: "Ana Test",
         buyerEmail: "ana@example.com",
-        tierKey: "plus",
+        chances: 3,
         amountArs: 35000,
       },
     ]);

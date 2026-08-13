@@ -42,9 +42,6 @@ export default async function MiCuentaPage() {
   const user = userData.user;
 
   const overview = await getMemberAccountOverview(user.id, supabase);
-  const approvedTierKeys = overview.orders
-    .filter((order) => order.status === "approved")
-    .map((order) => order.tierKey) as Array<"inicial" | "plus" | "premium">;
 
   const showClaimPrompt = Boolean(user.is_anonymous) && overview.hasCourseAccess;
 
@@ -87,10 +84,7 @@ export default async function MiCuentaPage() {
       <section className="mt-10">
         <h2 className="font-display text-xl text-foreground">Tu curso</h2>
         <div className="mt-4">
-          <CoursePlaceholder
-            hasCourseAccess={overview.hasCourseAccess}
-            tierKeys={approvedTierKeys}
-          />
+          <CoursePlaceholder hasCourseAccess={overview.hasCourseAccess} />
         </div>
       </section>
     </div>

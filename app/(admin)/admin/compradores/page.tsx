@@ -18,6 +18,25 @@ function formatAmount(value: number) {
   return `$${value.toLocaleString("es-AR")}`;
 }
 
+const ORDER_STATUS_LABEL: Record<string, string> = {
+  pending: "Pendiente",
+  approved: "Aprobada",
+  rejected: "Rechazada",
+  expired: "Expirada",
+};
+
+const EDITION_STATUS_LABEL: Record<string, string> = {
+  draft: "Borrador",
+  open: "Abierta",
+  closed: "Cerrada",
+  drawn: "Sorteada",
+};
+
+const METHOD_LABEL: Record<string, string> = {
+  mp: "Mercado Pago",
+  transfer: "Transferencia",
+};
+
 /**
  * `/admin/compradores` (tasks.md admin-panel-v2 work unit 1 "Buyer 360").
  * Search by email or DNI, see every order for that person across every
@@ -78,7 +97,7 @@ export default async function AdminCompradoresPage({ searchParams }: PageProps) 
               <thead>
                 <tr className="border-b border-surface text-muted-foreground">
                   <th className="py-2 pr-4">Edición</th>
-                  <th className="py-2 pr-4">Tier</th>
+                  <th className="py-2 pr-4">Chances</th>
                   <th className="py-2 pr-4">Monto</th>
                   <th className="py-2 pr-4">Método</th>
                   <th className="py-2 pr-4">Estado</th>
@@ -90,14 +109,19 @@ export default async function AdminCompradoresPage({ searchParams }: PageProps) 
                 {orders.map((order) => (
                   <tr key={order.orderId} className="border-b border-surface/60">
                     <td className="py-2 pr-4 text-foreground">
-                      {order.editionMonth}/{order.editionYear} ({order.editionStatus})
+                      {order.editionMonth}/{order.editionYear} (
+                      {EDITION_STATUS_LABEL[order.editionStatus] ?? order.editionStatus})
                     </td>
-                    <td className="py-2 pr-4 text-muted-foreground">{order.tierKey}</td>
+                    <td className="py-2 pr-4 text-muted-foreground">{order.chances}</td>
                     <td className="py-2 pr-4 text-muted-foreground">
                       {formatAmount(order.amountArs)}
                     </td>
-                    <td className="py-2 pr-4 text-muted-foreground">{order.method}</td>
-                    <td className="py-2 pr-4 text-muted-foreground">{order.status}</td>
+                    <td className="py-2 pr-4 text-muted-foreground">
+                      {METHOD_LABEL[order.method] ?? order.method}
+                    </td>
+                    <td className="py-2 pr-4 text-muted-foreground">
+                      {ORDER_STATUS_LABEL[order.status] ?? order.status}
+                    </td>
                     <td className="py-2 pr-4 text-champagne">
                       {order.numbers.map(formatNumber).join(", ") || "—"}
                     </td>

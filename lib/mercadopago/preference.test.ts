@@ -3,7 +3,8 @@ import { createPreferenceForOrder, MercadoPagoPreferenceError } from "./preferen
 
 const order = {
   id: "order-1",
-  tierKey: "inicial",
+  tierId: "tier-1",
+  numbersGranted: 1,
   amountArs: 15000,
   buyerName: "Martín García",
   buyerEmail: "martin@example.com",
@@ -37,7 +38,7 @@ describe("createPreferenceForOrder", () => {
         notification_url: "https://sorteapp.example.com/api/webhooks/mercadopago",
         items: [
           expect.objectContaining({
-            id: "inicial",
+            id: "tier-1",
             quantity: 1,
             unit_price: 15000,
             currency_id: "ARS",

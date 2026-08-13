@@ -102,7 +102,7 @@ export async function reviewReceipt(
     })
     .eq("id", orderId)
     .eq("status", "pending")
-    .select("id, tier_key")
+    .select("id, tier_id")
     .maybeSingle();
 
   if (orderError) {
@@ -113,7 +113,7 @@ export async function reviewReceipt(
     const { data: tier, error: tierError } = await supabase
       .from("tier")
       .select("numbers_granted")
-      .eq("key", updatedOrder.tier_key)
+      .eq("id", updatedOrder.tier_id)
       .single();
 
     if (tierError || !tier) {

@@ -7,9 +7,13 @@
  * exact same static-content convention `lib/marketing/content.ts` (PR4)
  * used for the landing page — presentational data only, no fetching.
  *
+ * One fixed bundle for every buyer (change: edition-tiers) — tiers now vary
+ * by chance count/price, not by which course you get (same structure as the
+ * real-world reference this feature is modeled on: a single digital pack
+ * included with every purchase, regardless of how many chances you bought).
+ *
  * TODO: contenido real del curso — reemplazar por `course_track`/
- * `track_lesson` reales (design.md §2) cuando exista el catálogo, y migrar
- * este gate a `course_access` si se necesita granularidad por track.
+ * `track_lesson` reales (design.md §2) cuando exista el catálogo.
  */
 
 export interface PlaceholderLesson {
@@ -18,38 +22,17 @@ export interface PlaceholderLesson {
   videoUrl: string;
 }
 
-export const placeholderCourseContent: Record<
-  "inicial" | "plus" | "premium",
-  PlaceholderLesson[]
-> = {
-  inicial: [
-    {
-      title: "Bienvenida y primeros pasos",
-      videoUrl: "https://example.com/cursos/inicial/leccion-1.mp4",
-    },
-  ],
-  plus: [
-    {
-      title: "Bienvenida y primeros pasos",
-      videoUrl: "https://example.com/cursos/plus/leccion-1.mp4",
-    },
-    {
-      title: "Fundamentos avanzados",
-      videoUrl: "https://example.com/cursos/plus/leccion-2.mp4",
-    },
-  ],
-  premium: [
-    {
-      title: "Bienvenida y primeros pasos",
-      videoUrl: "https://example.com/cursos/premium/leccion-1.mp4",
-    },
-    {
-      title: "Fundamentos avanzados",
-      videoUrl: "https://example.com/cursos/premium/leccion-2.mp4",
-    },
-    {
-      title: "Catálogo completo desbloqueado",
-      videoUrl: "https://example.com/cursos/premium/leccion-3.mp4",
-    },
-  ],
-};
+export const placeholderCourseContent: PlaceholderLesson[] = [
+  {
+    title: "Bienvenida y primeros pasos",
+    videoUrl: "https://example.com/cursos/leccion-1.mp4",
+  },
+  {
+    title: "Fundamentos avanzados",
+    videoUrl: "https://example.com/cursos/leccion-2.mp4",
+  },
+  {
+    title: "Catálogo completo desbloqueado",
+    videoUrl: "https://example.com/cursos/leccion-3.mp4",
+  },
+];

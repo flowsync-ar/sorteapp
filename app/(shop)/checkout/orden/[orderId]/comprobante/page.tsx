@@ -43,7 +43,7 @@ export default async function ComprobantePage({ params }: PageProps) {
 
   const { data: order } = await supabase
     .from("order")
-    .select("id, tier_key, amount_ars, status, method, reject_reason")
+    .select("id, amount_ars, status, method, reject_reason, tier:tier_id(numbers_granted)")
     .eq("id", orderId)
     .maybeSingle();
 
@@ -57,7 +57,16 @@ export default async function ComprobantePage({ params }: PageProps) {
     .eq("order_id", orderId)
     .maybeSingle();
 
-  const orderView = { ...order, amount_ars: Number(order.amount_ars) };
+  // Untyped Supabase client (no generated Database types, project
+  // convention) infers a to-one nested select as an array — same
+  // `as unknown as X` escape hatch `lib/admin/buyer-profile.ts` uses.
+  const tier = order.tier as unknown as { numbers_granted: number } | null;
+  const orderView = {
+    id: order.id,
+    chances: tier?.numbers_granted ?? 0,
+    amount_ars: Number(order.amount_ars),
+    status: order.status,
+  };
 
   if (order.status === "approved" || order.status === "expired") {
     const copy = DECIDED_ORDER_COPY[order.status];

@@ -14,12 +14,12 @@ const baseRow = {
   buyer_name: "Ana Test",
   buyer_email: "ana@example.com",
   buyer_dni: "30111222",
-  tier_key: "plus",
   method: "mp",
   status: "approved",
   amount_ars: "15000",
   created_at: "2026-01-05T10:00:00Z",
   raffle_edition: { month: 1, year: 2026, status: "closed", prize_title: "Premio Enero" },
+  tier: { numbers_granted: 3 },
   raffle_number: [{ number: 123456 }],
 };
 
@@ -43,7 +43,7 @@ describe("findBuyerOrders", () => {
         editionYear: 2026,
         editionStatus: "closed",
         prizeTitle: "Premio Enero",
-        tierKey: "plus",
+        chances: 3,
         amountArs: 15000,
         method: "mp",
         status: "approved",

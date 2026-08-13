@@ -2,12 +2,12 @@ import { describe, expect, it } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { OrderPlaceholder } from "./OrderPlaceholder";
 
-const order = { id: "order-1", tier_key: "inicial", amount_ars: 15000, status: "approved" };
+const order = { id: "order-1", chances: 1, amount_ars: 15000, status: "approved" };
 
 describe("OrderPlaceholder", () => {
   it("renders the order summary", () => {
     render(<OrderPlaceholder order={order} title="¡Pago aprobado!" noticeText="ok" />);
-    expect(screen.getByText("inicial")).toBeInTheDocument();
+    expect(screen.getByText("1")).toBeInTheDocument();
   });
 
   it("renders extra children below the summary when provided (tasks.md PR8, member-area CTA)", () => {

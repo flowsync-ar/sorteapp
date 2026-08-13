@@ -6,8 +6,10 @@ import { requireAdminUser } from "@/lib/admin/guard";
 import {
   closeEdition,
   createEdition,
+  createEditionTiers,
   publishEdition,
   validateCreateEditionInput,
+  validateTierRows,
   type CloseEditionResult,
   type CreateEditionResult,
   type PublishEditionResult,
@@ -38,6 +40,11 @@ interface CreateEditionActionOverrides {
     input: Parameters<typeof createEdition>[0],
     client: never,
   ) => Promise<CreateEditionResult>;
+  createTiers?: (
+    editionId: string,
+    tiers: Parameters<typeof createEditionTiers>[1],
+    client: never,
+  ) => ReturnType<typeof createEditionTiers>;
   uploadImage?: (
     input: Parameters<typeof uploadPrizeImage>[0],
     client: never,
@@ -63,6 +70,7 @@ export async function createEditionAction(
 ): Promise<CreateEditionFormState> {
   const requireAdmin = overrides.requireAdmin ?? requireAdminUser;
   const create = overrides.create ?? createEdition;
+  const createTiers = overrides.createTiers ?? createEditionTiers;
   const uploadImage = overrides.uploadImage ?? uploadPrizeImage;
   const getClient = overrides.getClient ?? createClient;
   const doRevalidate = overrides.doRevalidate ?? revalidatePath;
@@ -76,10 +84,19 @@ export async function createEditionAction(
     prizeTitle: String(formData.get("prizeTitle") ?? ""),
     drawDate: String(formData.get("drawDate") ?? ""),
     status: String(formData.get("status") ?? "open"),
+    prizeCostArs: String(formData.get("prizeCostArs") ?? ""),
   });
 
   if (!validation.success) {
     return { status: "error", fieldErrors: validation.errors };
+  }
+
+  // Validated before the edition is created (unlike the prize photo, tiers
+  // aren't decorative -- an edition with none has nothing to sell), so a
+  // malformed calculator submission never leaves an unsellable edition behind.
+  const tiersValidation = validateTierRows(String(formData.get("tiers") ?? ""));
+  if (!tiersValidation.success) {
+    return { status: "error", formError: tiersValidation.error };
   }
 
   const supabase = await getClient();
@@ -89,11 +106,18 @@ export async function createEditionAction(
     return { status: "error", formError: result.error };
   }
 
-  // The edition needs an id before the image can be uploaded (deterministic
-  // `{editionId}` Storage path, design.md ADR-3), so this can only happen
-  // after `create` succeeds -- and a failure here must NOT roll back the
-  // edition (design.md §4: non-fatal, admin can retry via edit).
+  // The edition needs an id before tiers/image can reference it (FK / the
+  // deterministic `{editionId}` Storage path, design.md ADR-3), so both can
+  // only happen after `create` succeeds -- a failure here must NOT roll back
+  // the edition (design.md §4: non-fatal, admin can retry via edit).
   let warning: string | undefined;
+  try {
+    await createTiers(result.editionId, tiersValidation.data, supabase as never);
+  } catch (error) {
+    warning =
+      error instanceof Error ? error.message : "No pudimos guardar las opciones de chances.";
+  }
+
   const file = extractOptionalFile(formData, "prizeImage");
   if (file) {
     try {

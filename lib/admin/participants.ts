@@ -15,7 +15,7 @@ export interface ParticipantView {
   orderId: string;
   buyerName: string;
   buyerEmail: string;
-  tierKey: string;
+  chances: number;
   status: string;
   method: string;
   numbers: number[];
@@ -27,9 +27,9 @@ interface ParticipantRow {
   id: string;
   buyer_name: string;
   buyer_email: string;
-  tier_key: string;
   status: string;
   method: string;
+  tier: { numbers_granted: number } | null;
   raffle_number: Array<{ number: number }> | null;
 }
 
@@ -52,7 +52,9 @@ export async function listParticipants(
 ): Promise<ParticipantView[]> {
   const { data, error } = await client
     .from("order")
-    .select("id, buyer_name, buyer_email, tier_key, status, method, raffle_number(number)")
+    .select(
+      "id, buyer_name, buyer_email, status, method, tier:tier_id(numbers_granted), raffle_number(number)",
+    )
     .eq("edition_id", editionId)
     .order("created_at", { ascending: false });
 
@@ -66,7 +68,7 @@ export async function listParticipants(
     orderId: row.id,
     buyerName: row.buyer_name,
     buyerEmail: row.buyer_email,
-    tierKey: row.tier_key,
+    chances: row.tier?.numbers_granted ?? 0,
     status: row.status,
     method: row.method,
     numbers: (row.raffle_number ?? []).map((n) => n.number),

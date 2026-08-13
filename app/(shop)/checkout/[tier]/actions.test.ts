@@ -48,7 +48,7 @@ function fakeSupabase(options: {
   captureInsert?: (payload: unknown) => void;
 }) {
   const tierBuilder = makeQueryBuilder(
-    options.tier ?? { data: { key: "inicial", price_ars: "15000.00" }, error: null },
+    options.tier ?? { data: { id: "tier-1", price_ars: "15000.00" }, error: null },
   );
   const editionBuilder = makeQueryBuilder(
     options.edition ?? { data: { id: "edition-1" }, error: null },
@@ -86,7 +86,7 @@ describe("createOrder", () => {
     const doRedirect = noopRedirect();
 
     const result = await createOrder(
-      "inicial",
+      "tier-1",
       { status: "idle" },
       validFormData({ name: "Al" }),
       { getClient: async () => client as never, doRedirect },
@@ -104,7 +104,7 @@ describe("createOrder", () => {
     const client = fakeSupabase({});
 
     const result = await createOrder(
-      "inicial",
+      "tier-1",
       { status: "idle" },
       validFormData({ method: "cash" }),
       { getClient: async () => client as never, doRedirect: noopRedirect() },
@@ -119,7 +119,7 @@ describe("createOrder", () => {
   it("returns a form error when the tier no longer exists", async () => {
     const client = fakeSupabase({ tier: { data: null, error: { message: "not found" } } });
 
-    const result = await createOrder("inicial", { status: "idle" }, validFormData(), {
+    const result = await createOrder("tier-1", { status: "idle" }, validFormData(), {
       getClient: async () => client as never,
       doRedirect: noopRedirect(),
     });
@@ -130,7 +130,7 @@ describe("createOrder", () => {
   it("returns a form error when there is no open edition", async () => {
     const client = fakeSupabase({ edition: { data: null, error: null } });
 
-    const result = await createOrder("inicial", { status: "idle" }, validFormData(), {
+    const result = await createOrder("tier-1", { status: "idle" }, validFormData(), {
       getClient: async () => client as never,
       doRedirect: noopRedirect(),
     });
@@ -153,7 +153,7 @@ describe("createOrder", () => {
     });
 
     await expect(
-      createOrder("inicial", { status: "idle" }, validFormData({ method: "mp" }), {
+      createOrder("tier-1", { status: "idle" }, validFormData({ method: "mp" }), {
         getClient: async () => client as never,
         doRedirect: doRedirect as never,
       }),
@@ -163,7 +163,7 @@ describe("createOrder", () => {
     expect(insertedPayload).toMatchObject({
       user_id: "anon-user-1",
       edition_id: "edition-1",
-      tier_key: "inicial",
+      tier_id: "tier-1",
       method: "mp",
       status: "pending",
       amount_ars: 15000,
@@ -185,7 +185,7 @@ describe("createOrder", () => {
     });
 
     await expect(
-      createOrder("inicial", { status: "idle" }, validFormData({ method: "transfer" }), {
+      createOrder("tier-1", { status: "idle" }, validFormData({ method: "transfer" }), {
         getClient: async () => client as never,
         doRedirect: doRedirect as never,
       }),
@@ -209,14 +209,14 @@ describe("createOrder", () => {
         });
       }
       if (table === "tier")
-        return makeQueryBuilder({ data: { key: "inicial", price_ars: "15000.00" }, error: null });
+        return makeQueryBuilder({ data: { id: "tier-1", price_ars: "15000.00" }, error: null });
       if (table === "raffle_edition")
         return makeQueryBuilder({ data: { id: "edition-1" }, error: null });
       throw new Error(`Unexpected table ${table}`);
     });
 
     await expect(
-      createOrder("inicial", { status: "idle" }, validFormData(), {
+      createOrder("tier-1", { status: "idle" }, validFormData(), {
         getClient: async () => client as never,
         doRedirect: doRedirect as never,
       }),
@@ -231,7 +231,7 @@ describe("createOrder", () => {
       insertResult: { data: null, error: { message: "insert failed" } },
     });
 
-    const result = await createOrder("inicial", { status: "idle" }, validFormData(), {
+    const result = await createOrder("tier-1", { status: "idle" }, validFormData(), {
       getClient: async () => client as never,
       doRedirect: noopRedirect(),
     });
