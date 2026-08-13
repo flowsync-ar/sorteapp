@@ -14,15 +14,15 @@ export default function ShopLayout({
 }) {
   return (
     <>
-      <header className="border-b border-surface px-6 py-4">
+      <header className="relative z-20 flex h-20 items-start border-b border-surface px-6 py-4">
         <Link href="/" className="flex items-center" aria-label="Sorteapp">
           <Image
-            src="/logo.png"
+            src="/logo-sorteoapp-transp.png"
             alt="Sorteapp"
-            width={497}
-            height={401}
+            width={2400}
+            height={1309}
             priority
-            className="h-12 w-auto"
+            className="h-56 w-auto"
           />
         </Link>
       </header>

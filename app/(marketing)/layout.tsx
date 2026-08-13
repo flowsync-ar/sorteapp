@@ -15,18 +15,22 @@ export default function MarketingLayout({
 }) {
   return (
     <>
-      <header className="border-b border-surface px-6 py-4">
-        <div className="mx-auto flex max-w-5xl items-center justify-between">
-          <Link href="/" className="flex items-center" aria-label="Sorteapp">
-            <Image
-              src="/logo.png"
-              alt="Sorteapp"
-              width={497}
-              height={401}
-              priority
-              className="h-12 w-auto"
-            />
-          </Link>
+      <header className="relative z-20 border-b border-surface px-6 py-4">
+        <Link
+          href="/"
+          className="absolute left-6 top-0 flex items-start"
+          aria-label="Sorteapp"
+        >
+          <Image
+            src="/logo-sorteoapp-transp.png"
+            alt="Sorteapp"
+            width={2400}
+            height={1309}
+            priority
+            className="h-56 w-auto"
+          />
+        </Link>
+        <div className="mx-auto flex h-12 max-w-5xl items-center justify-end">
           <nav
             aria-label="Principal"
             className="flex items-center gap-6 font-sans text-sm text-muted-foreground"

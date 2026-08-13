@@ -39,18 +39,22 @@ export default async function AdminLayout({
 
   return (
     <div className="min-h-screen bg-ink text-foreground">
-      <div className="border-b border-surface bg-surface/40">
-        <div className="mx-auto flex max-w-6xl items-center gap-6 px-6 py-4">
-          <Link href="/admin" className="flex items-center gap-2" aria-label="Sorteapp — Panel admin">
-            <Image
-              src="/logo.png"
-              alt=""
-              width={497}
-              height={401}
-              className="h-7 w-auto"
-            />
-            <span className="font-display text-lg text-champagne">Panel admin</span>
-          </Link>
+      <div className="relative z-20 border-b border-surface bg-surface/40">
+        <Link
+          href="/admin"
+          className="absolute left-6 top-0 flex items-start gap-2"
+          aria-label="Sorteapp — Panel admin"
+        >
+          <Image
+            src="/logo-sorteoapp-transp.png"
+            alt=""
+            width={2400}
+            height={1309}
+            className="h-32 w-auto"
+          />
+          <span className="font-display text-lg text-champagne">Panel admin</span>
+        </Link>
+        <div className="mx-auto flex h-[60px] max-w-6xl items-center justify-end gap-6 px-6 py-4">
           <nav className="flex gap-4 text-sm">
             {NAV_ITEMS.map((item) => (
               <Link
