@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import type { CurrentPrize } from "@/lib/marketing/content";
 
 interface PrizeOfMonthProps {
@@ -36,6 +37,12 @@ export function PrizeOfMonth({ prize }: PrizeOfMonthProps) {
             {prize.title}
           </h2>
           <p className="mt-4 text-muted-foreground">{prize.description}</p>
+          <Link
+            href="/terminos"
+            className="mt-4 inline-block font-sans text-sm font-semibold text-champagne underline underline-offset-4"
+          >
+            Ver detalles completos del premio →
+          </Link>
         </div>
       </div>
     </section>

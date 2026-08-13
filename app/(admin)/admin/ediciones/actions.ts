@@ -110,12 +110,20 @@ export async function createEditionAction(
   // deterministic `{editionId}` Storage path, design.md ADR-3), so both can
   // only happen after `create` succeeds -- a failure here must NOT roll back
   // the edition (design.md §4: non-fatal, admin can retry via edit).
-  let warning: string | undefined;
+  let warning: string | undefined = result.fellBackToDraft
+    ? "Ya había una edición abierta, así que esta se creó como Borrador. Activala desde la tabla cuando cierres la actual."
+    : undefined;
+
+  function appendWarning(message: string) {
+    warning = warning ? `${warning} ${message}` : message;
+  }
+
   try {
     await createTiers(result.editionId, tiersValidation.data, supabase as never);
   } catch (error) {
-    warning =
-      error instanceof Error ? error.message : "No pudimos guardar las opciones de chances.";
+    appendWarning(
+      error instanceof Error ? error.message : "No pudimos guardar las opciones de chances.",
+    );
   }
 
   const file = extractOptionalFile(formData, "prizeImage");
@@ -123,7 +131,9 @@ export async function createEditionAction(
     try {
       await uploadImage({ editionId: result.editionId, file }, supabase as never);
     } catch (error) {
-      warning = error instanceof Error ? error.message : "No pudimos subir la imagen del premio.";
+      appendWarning(
+        error instanceof Error ? error.message : "No pudimos subir la imagen del premio.",
+      );
     }
   }
 
@@ -155,6 +165,13 @@ export async function closeEditionAction(
   const supabase = await getClient();
   await close(editionId, supabase as never);
 
+  // The public landing's header reads the edition's status/draw_date
+  // (`getCurrentDrawStatus`, `LiveDrawNavItem`) to decide whether to show
+  // "Ver Sorteo en Vivo" -- closing here is exactly the kind of change that
+  // must not wait for the next ISR revalidation window (bugfix: this used
+  // to only revalidate "/admin/ediciones", so the live badge could stay
+  // stale for a whole draw).
+  doRevalidate("/");
   doRevalidate("/admin/ediciones");
   return { status: "idle" };
 }
@@ -237,6 +254,11 @@ export async function publishWinnerAction(
     return { status: "error", formError: message };
   }
 
+  // Same reasoning as `closeEditionAction`: publishing the winner (`status`
+  // -> "drawn") is what ends the public "Ver Sorteo en Vivo" live window
+  // (`getCurrentDrawStatus` stops matching the edition at all), so "/" must
+  // revalidate immediately too, not just the admin table.
+  doRevalidate("/");
   doRevalidate("/admin/ediciones");
   return { status: "success" };
 }

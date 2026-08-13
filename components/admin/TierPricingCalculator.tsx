@@ -10,10 +10,16 @@ interface TierPricingCalculatorProps {
 }
 
 const inputClassName =
-  "mt-1 w-full rounded-lg border border-surface bg-ink px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-champagne focus:outline-none";
+  "mt-1 w-full rounded-lg border border-white/15 bg-ink px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-champagne focus:outline-none";
 
 function formatArs(value: number) {
   return `$${value.toLocaleString("es-AR")}`;
+}
+
+/** Strips everything but digits — the source of truth kept in state and
+ * submitted via the hidden field is always the raw number as a string. */
+function digitsOnly(value: string) {
+  return value.replace(/\D/g, "");
 }
 
 /**
@@ -54,16 +60,20 @@ export function TierPricingCalculator({
         Costo del premio
       </label>
       <div className="mt-1 flex gap-2">
-        <input
-          id={`${baseId}-cost`}
-          type="number"
-          min={1}
-          inputMode="numeric"
-          placeholder="Ej: 3000000"
-          value={costInput}
-          onChange={(event) => setCostInput(event.target.value)}
-          className={inputClassName}
-        />
+        <div className="relative flex-1">
+          <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-sm text-muted-foreground">
+            $
+          </span>
+          <input
+            id={`${baseId}-cost`}
+            type="text"
+            inputMode="numeric"
+            placeholder="Ej: 3.000.000"
+            value={costInput ? Number(costInput).toLocaleString("es-AR") : ""}
+            onChange={(event) => setCostInput(digitsOnly(event.target.value))}
+            className={`${inputClassName} pl-7`}
+          />
+        </div>
         <button
           type="button"
           onClick={handleSuggest}

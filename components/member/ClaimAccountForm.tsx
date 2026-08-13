@@ -13,7 +13,7 @@ interface ClaimAccountFormProps {
 const idleState: ClaimAccountFormState = { status: "idle" };
 
 const inputClassName =
-  "mt-1 w-full rounded-lg border border-surface bg-ink px-3 py-2 text-foreground placeholder:text-muted-foreground focus:border-champagne focus:outline-none aria-[invalid=true]:border-red-400";
+  "mt-1 w-full rounded-lg border border-white/15 bg-ink px-3 py-2 text-foreground placeholder:text-muted-foreground focus:border-champagne focus:outline-none aria-[invalid=true]:border-red-400";
 
 /**
  * "Reclamá tu cuenta" form (tasks.md PR8.1, spec.md §7): shown in

@@ -12,7 +12,9 @@ describe("ChanceSelector", () => {
   it("defaults to the first tier and shows its price", () => {
     render(<ChanceSelector tiers={tiers} />);
 
-    expect(screen.getByRole("combobox")).toHaveValue("tier-1");
+    expect(
+      screen.getByRole("button", { name: /cantidad de chances/i }),
+    ).toHaveTextContent("1 chance — $ 15.000");
     expect(screen.getByText("$ 15.000")).toBeInTheDocument();
   });
 
@@ -29,7 +31,8 @@ describe("ChanceSelector", () => {
     const user = userEvent.setup();
     render(<ChanceSelector tiers={tiers} />);
 
-    await user.selectOptions(screen.getByRole("combobox"), "tier-2");
+    await user.click(screen.getByRole("button", { name: /cantidad de chances/i }));
+    await user.click(screen.getByRole("option", { name: /6 chances/i }));
 
     expect(screen.getByText("$ 52.000")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /continuar/i })).toHaveAttribute(
@@ -41,7 +44,9 @@ describe("ChanceSelector", () => {
   it("shows an empty state instead of a dropdown when there are no tiers", () => {
     render(<ChanceSelector tiers={[]} />);
 
-    expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /cantidad de chances/i }),
+    ).not.toBeInTheDocument();
     expect(screen.getByText(/todavía no hay chances disponibles/i)).toBeInTheDocument();
   });
 });

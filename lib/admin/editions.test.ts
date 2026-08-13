@@ -131,8 +131,11 @@ describe("createEdition", () => {
     expect(result).toEqual({ success: true, editionId: "edition-2" });
   });
 
-  it("returns a friendly error when another edition is already open (unique violation)", async () => {
-    const single = vi.fn(async () => ({ data: null, error: { code: "23505", message: "duplicate" } }));
+  it("falls back to draft when another edition is already open (unique violation), instead of failing", async () => {
+    const single = vi
+      .fn()
+      .mockResolvedValueOnce({ data: null, error: { code: "23505", message: "duplicate" } })
+      .mockResolvedValueOnce({ data: { id: "edition-2-draft" }, error: null });
     const select = vi.fn(() => ({ single }));
     const insert = vi.fn(() => ({ select }));
     const from = vi.fn(() => ({ insert }));
@@ -142,10 +145,56 @@ describe("createEdition", () => {
       { from } as never,
     );
 
+    expect(insert).toHaveBeenCalledTimes(2);
+    expect(insert).toHaveBeenNthCalledWith(1, expect.objectContaining({ status: "open" }));
+    expect(insert).toHaveBeenNthCalledWith(2, expect.objectContaining({ status: "draft" }));
+    expect(result).toEqual({
+      success: true,
+      editionId: "edition-2-draft",
+      fellBackToDraft: true,
+    });
+  });
+
+  it("returns a friendly error when an explicit draft request still collides", async () => {
+    const single = vi.fn(async () => ({ data: null, error: { code: "23505", message: "duplicate" } }));
+    const select = vi.fn(() => ({ single }));
+    const insert = vi.fn(() => ({ select }));
+    const from = vi.fn(() => ({ insert }));
+
+    const result = await createEdition(
+      {
+        month: 9,
+        year: 2026,
+        numberCap: 500,
+        prizeTitle: "TV 55",
+        drawDateIso: "2026-09-30T21:00:00Z",
+        status: "draft",
+      },
+      { from } as never,
+    );
+
+    expect(insert).toHaveBeenCalledTimes(1);
     expect(result).toEqual({
       success: false,
       error: expect.stringMatching(/ya hay una edición abierta/i),
     });
+  });
+
+  it("throws when the draft fallback insert also fails", async () => {
+    const single = vi
+      .fn()
+      .mockResolvedValueOnce({ data: null, error: { code: "23505", message: "duplicate" } })
+      .mockResolvedValueOnce({ data: null, error: { code: "500", message: "db down" } });
+    const select = vi.fn(() => ({ single }));
+    const insert = vi.fn(() => ({ select }));
+    const from = vi.fn(() => ({ insert }));
+
+    await expect(
+      createEdition(
+        { month: 9, year: 2026, numberCap: 500, prizeTitle: "TV 55", drawDateIso: "2026-09-30T21:00:00Z" },
+        { from } as never,
+      ),
+    ).rejects.toThrow("No pudimos crear la edición.");
   });
 
   it("inserts a draft edition when status is explicitly draft (planned prize, no open-slot conflict)", async () => {

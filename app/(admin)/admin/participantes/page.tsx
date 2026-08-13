@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { requireAdminUser } from "@/lib/admin/guard";
 import { listEditions } from "@/lib/admin/editions";
 import { listParticipants } from "@/lib/admin/participants";
+import { Select } from "@/components/ui/Select";
 
 interface PageProps {
   searchParams: Promise<{ edition?: string; q?: string }>;
@@ -51,22 +52,21 @@ export default async function AdminParticipantesPage({ searchParams }: PageProps
       <h1 className="font-display text-2xl text-foreground">Participantes</h1>
 
       <form method="get" className="mt-6 flex flex-wrap items-end gap-4">
-        <div>
-          <label htmlFor="edition" className="text-sm font-medium text-foreground">
+        <div className="w-64">
+          <label id="edition-label" className="text-sm font-medium text-foreground">
             Edición
           </label>
-          <select
-            id="edition"
-            name="edition"
-            defaultValue={selectedEditionId}
-            className="mt-1 rounded-lg border border-surface bg-ink px-3 py-2 text-sm text-foreground"
-          >
-            {editions.map((edition) => (
-              <option key={edition.id} value={edition.id}>
-                {edition.month}/{edition.year} ({EDITION_STATUS_LABEL[edition.status] ?? edition.status})
-              </option>
-            ))}
-          </select>
+          <div className="mt-1">
+            <Select
+              name="edition"
+              aria-labelledby="edition-label"
+              defaultValue={selectedEditionId}
+              options={editions.map((edition) => ({
+                value: edition.id,
+                label: `${edition.month}/${edition.year} (${EDITION_STATUS_LABEL[edition.status] ?? edition.status})`,
+              }))}
+            />
+          </div>
         </div>
 
         <div>
@@ -78,7 +78,7 @@ export default async function AdminParticipantesPage({ searchParams }: PageProps
             name="q"
             type="text"
             defaultValue={q ?? ""}
-            className="mt-1 rounded-lg border border-surface bg-ink px-3 py-2 text-sm text-foreground"
+            className="mt-1 rounded-lg border border-white/15 bg-ink px-3 py-2 text-sm text-foreground"
           />
         </div>
 

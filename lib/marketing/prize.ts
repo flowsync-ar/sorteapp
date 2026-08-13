@@ -6,11 +6,14 @@ type PublicEditionsClient = Pick<SupabaseClient, "from">;
 interface OpenEditionRow {
   prize_image: string | null;
   prize_title: string | null;
+  draw_date: string | null;
 }
 
 export interface OpenEditionPrize {
   imageUrl: string | null;
   title: string | null;
+  /** Real `draw_date` of the open edition, for `DrawCountdown` — `null` pre-launch. */
+  drawDateIso: string | null;
 }
 
 /**
@@ -27,7 +30,7 @@ export async function getOpenEditionPrize(
 ): Promise<OpenEditionPrize | null> {
   const { data, error } = await client
     .from("raffle_edition")
-    .select("prize_image, prize_title")
+    .select("prize_image, prize_title, draw_date")
     .eq("status", "open")
     .limit(1);
 
@@ -39,5 +42,6 @@ export async function getOpenEditionPrize(
   return {
     imageUrl: row.prize_image,
     title: row.prize_title,
+    drawDateIso: row.draw_date,
   };
 }

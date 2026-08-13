@@ -70,6 +70,27 @@ describe("createEditionAction", () => {
     expect(doRevalidate).toHaveBeenCalledWith("/admin/ediciones");
   });
 
+  it("surfaces a warning instead of an error when create() fell back to draft", async () => {
+    const create = vi
+      .fn()
+      .mockResolvedValue({ success: true, editionId: "edition-1", fellBackToDraft: true });
+    const doRevalidate = vi.fn();
+
+    const result = await createEditionAction({ status: "idle" }, validFormData(), {
+      requireAdmin: vi.fn().mockResolvedValue(adminUser()),
+      create,
+      createTiers: vi.fn().mockResolvedValue(undefined),
+      getClient: async () => ({}) as never,
+      doRevalidate,
+    });
+
+    expect(result).toEqual({
+      status: "success",
+      warning: expect.stringMatching(/ya había una edición abierta/i),
+    });
+    expect(doRevalidate).toHaveBeenCalledWith("/admin/ediciones");
+  });
+
   it("surfaces the domain error (e.g. already-open edition) without throwing", async () => {
     const create = vi
       .fn()
@@ -271,6 +292,10 @@ describe("closeEditionAction", () => {
 
     expect(result).toEqual({ status: "idle" });
     expect(close).toHaveBeenCalledWith("edition-1", expect.anything());
+    // Regression: closing sales is what starts the public "Ver Sorteo en
+    // Vivo" window (once the draw time arrives) -- "/" must revalidate
+    // immediately, not just the admin table.
+    expect(doRevalidate).toHaveBeenCalledWith("/");
     expect(doRevalidate).toHaveBeenCalledWith("/admin/ediciones");
   });
 });
@@ -344,6 +369,10 @@ describe("publishWinnerAction", () => {
 
     expect(result).toEqual({ status: "success" });
     expect(publish).toHaveBeenCalledWith("edition-1", 555555, expect.anything());
+    // Regression: publishing the winner ends the public live window
+    // ("/" reads `getCurrentDrawStatus`, which stops matching once the
+    // edition is `drawn`) -- must revalidate "/" too, not just the admin table.
+    expect(doRevalidate).toHaveBeenCalledWith("/");
     expect(doRevalidate).toHaveBeenCalledWith("/admin/ediciones");
   });
 

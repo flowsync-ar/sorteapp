@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { DrawCountdown } from "./DrawCountdown";
 import type { CurrentPrize } from "@/lib/marketing/content";
 
 interface HeroPrizeProps {
@@ -34,6 +35,9 @@ export function HeroPrize({ prize }: HeroPrizeProps) {
           <h1 className="mt-2 font-display text-4xl text-foreground sm:text-5xl">
             Premio con respaldo
           </h1>
+          <p className="mt-2 text-lg font-semibold text-emerald sm:text-xl">
+            Cursos Digitales con Sorteos
+          </p>
           <p className="mt-4 max-w-md text-muted-foreground">
             Comprá un curso digital y sumá automáticamente un número de 6
             cifras para el sorteo mensual, certificado por escribano público.
@@ -50,6 +54,7 @@ export function HeroPrize({ prize }: HeroPrizeProps) {
             <p className="mt-1 text-sm text-muted-foreground">
               Sorteo el {formatDrawDate(prize.drawDateIso)}
             </p>
+            <DrawCountdown drawDateIso={prize.drawDateIso} />
           </div>
 
           <a
@@ -68,7 +73,7 @@ export function HeroPrize({ prize }: HeroPrizeProps) {
             alt={prize.imageAlt}
             fill
             sizes="(min-width: 640px) 40vw, 90vw"
-            className="object-contain"
+            className="scale-125 object-cover"
             priority
           />
         </figure>

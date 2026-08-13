@@ -15,6 +15,39 @@
 
   --font-display: var(--font-fraunces), "Fraunces", serif;
   --font-sans: var(--font-geist-sans), "Geist", "Inter", sans-serif;
+
+  /* Countdown urgency (DrawCountdown): a heartbeat scale pulse, not just
+     Tailwind's built-in opacity-only `animate-pulse` — the ask was
+     something that visibly "late". */
+  --animate-heartbeat: heartbeat 1.1s ease-in-out infinite;
+}
+
+@keyframes heartbeat {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.08);
+  }
+}
+
+/* Light mode — every component reads colors through the tokens above
+   (`bg-ink`, `text-champagne`, `border-surface`, ...), so overriding the
+   custom properties here re-themes the whole site with zero component
+   changes. `champagne`/`emerald` are darkened (not just inverted) — they
+   also get used as *text* color (`text-champagne`) which needs real
+   contrast against a light `ink`, not just the "pops on dark" version.
+   Toggled by `ThemeToggle` writing `data-theme` on `<html>` + localStorage;
+   the inline script in `app/layout.tsx` sets it before first paint to avoid
+   a flash of the wrong theme. */
+:root[data-theme="light"] {
+  --color-ink: oklch(98% 0.008 85);
+  --color-surface: oklch(93% 0.012 85);
+  --color-champagne: oklch(52% 0.13 85);
+  --color-emerald: oklch(45% 0.14 160);
+  --color-foreground: oklch(15% 0.02 265);
+  --color-muted-foreground: oklch(40% 0.02 265);
 }
 
 body {

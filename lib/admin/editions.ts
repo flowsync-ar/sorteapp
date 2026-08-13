@@ -102,48 +102,72 @@ export interface CreateEditionInput {
 }
 
 export type CreateEditionResult =
-  | { success: true; editionId: string }
+  | { success: true; editionId: string; fellBackToDraft?: boolean }
   | { success: false; error: string };
 
 /**
- * Creates a new edition, always as `open` (tasks.md PR9.4: "crear nueva
+ * Creates a new edition, `open` by default (tasks.md PR9.4: "crear nueva
  * edición... cerrar edición activa" implies the natural admin workflow is
  * close-then-create). Relies entirely on the schema's own partial unique
  * index (`raffle_edition_single_open`, PR2) to enforce "one open edition at
  * a time" — this function does NOT pre-check for an existing open edition
  * itself (a check-then-insert race would be a TOCTOU bug); it just catches
- * the resulting `23505` and turns it into a message the admin UI can show
- * directly, per this batch's own instruction.
+ * the resulting `23505`.
+ *
+ * When the admin didn't explicitly ask for `draft`, that `23505` no longer
+ * hard-fails the whole submission: it retries the same insert as `draft`
+ * instead, so "create while one's already open" queues a planned edition
+ * (`fellBackToDraft: true`, surfaced as a warning) rather than losing
+ * everything the admin just filled in. An explicit `status: "draft"`
+ * request that somehow still collides (shouldn't happen — draft rows aren't
+ * indexed by `raffle_edition_single_open`) keeps the old hard-error message.
  */
 export async function createEdition(
   input: CreateEditionInput,
   client: EditionsQueryClient,
 ): Promise<CreateEditionResult> {
+  const requestedStatus = input.status ?? "open";
+  const basePayload = {
+    month: input.month,
+    year: input.year,
+    number_cap: input.numberCap,
+    prize_title: input.prizeTitle,
+    draw_date: input.drawDateIso,
+    prize_cost_ars: input.prizeCostArs ?? null,
+  };
+
   const { data, error } = await client
     .from("raffle_edition")
-    .insert({
-      month: input.month,
-      year: input.year,
-      status: input.status ?? "open",
-      number_cap: input.numberCap,
-      prize_title: input.prizeTitle,
-      draw_date: input.drawDateIso,
-      prize_cost_ars: input.prizeCostArs ?? null,
-    })
+    .insert({ ...basePayload, status: requestedStatus })
     .select("id")
     .single();
 
-  if (error) {
-    if (error.code === "23505") {
-      return {
-        success: false,
-        error: "Ya hay una edición abierta. Cerrala antes de crear una nueva.",
-      };
-    }
+  if (!error) {
+    return { success: true, editionId: data!.id as string };
+  }
+
+  if (error.code !== "23505") {
     throw new AdminEditionsError("No pudimos crear la edición.", error);
   }
 
-  return { success: true, editionId: data!.id as string };
+  if (requestedStatus !== "open") {
+    return {
+      success: false,
+      error: "Ya hay una edición abierta. Cerrala antes de crear una nueva.",
+    };
+  }
+
+  const retry = await client
+    .from("raffle_edition")
+    .insert({ ...basePayload, status: "draft" })
+    .select("id")
+    .single();
+
+  if (retry.error) {
+    throw new AdminEditionsError("No pudimos crear la edición.", retry.error);
+  }
+
+  return { success: true, editionId: retry.data!.id as string, fellBackToDraft: true };
 }
 
 export interface CreateEditionTierInput {

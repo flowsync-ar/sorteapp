@@ -42,7 +42,7 @@ export function WinnerForm({ action, initialStateOverride }: WinnerFormProps) {
           pattern="\d{1,6}"
           placeholder="000000"
           aria-invalid={state.status === "error"}
-          className="mt-1 w-32 rounded-lg border border-surface bg-ink px-3 py-1.5 text-sm text-foreground focus:border-champagne focus:outline-none"
+          className="mt-1 w-32 rounded-lg border border-white/15 bg-ink px-3 py-1.5 text-sm text-foreground focus:border-champagne focus:outline-none"
         />
       </div>
       <button

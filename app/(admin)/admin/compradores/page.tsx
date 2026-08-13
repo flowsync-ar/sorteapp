@@ -73,7 +73,7 @@ export default async function AdminCompradoresPage({ searchParams }: PageProps) 
             name="q"
             type="text"
             defaultValue={q ?? ""}
-            className="mt-1 rounded-lg border border-surface bg-ink px-3 py-2 text-sm text-foreground"
+            className="mt-1 rounded-lg border border-white/15 bg-ink px-3 py-2 text-sm text-foreground"
           />
         </div>
 

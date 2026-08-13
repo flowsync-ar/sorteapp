@@ -1,7 +1,8 @@
 "use client";
 
-import { useActionState, useId } from "react";
+import { useActionState, useId, useState } from "react";
 import type { CreateEditionAction, CreateEditionFormState } from "@/lib/admin/types";
+import { Select } from "@/components/ui/Select";
 import { PrizeImageInput } from "./PrizeImageInput";
 import { TierPricingCalculator } from "./TierPricingCalculator";
 
@@ -14,7 +15,7 @@ interface CreateEditionFormProps {
 const idleState: CreateEditionFormState = { status: "idle" };
 
 const inputClassName =
-  "mt-1 w-full rounded-lg border border-surface bg-ink px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-champagne focus:outline-none aria-[invalid=true]:border-red-400";
+  "mt-1 w-full rounded-lg border border-white/15 bg-ink px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-champagne focus:outline-none aria-[invalid=true]:border-red-400";
 
 /**
  * "Crear edición" form (tasks.md PR9.4, spec.md §8; status selector added in
@@ -26,6 +27,22 @@ const inputClassName =
  * never competes with that constraint — any number of `draft` rows can
  * coexist; `EditionsTable`'s "Activar edición" button (`publishEdition`)
  * flips one to `open` later.
+ *
+ * Every plain text/number/date field below is a *controlled* input (`value`
+ * + `onChange`, not `defaultValue`) on purpose: React 19 resets uncontrolled
+ * `<form action>` fields the instant the action call finishes — including
+ * on a validation error, wiping everything the admin just typed. Controlled
+ * state survives that reset since React re-applies it on the next render
+ * regardless of what the native form-reset already did to the DOM.
+ *
+ * A fresh *success* should still clear everything (ready for the next
+ * edition) — `formKey` remounts the whole `<form>` (this component's own
+ * controlled fields plus `TierPricingCalculator`/`Select`/`PrizeImageInput`'s
+ * own internal state) exactly once per successful submission. Bumping state
+ * conditionally during render like this (comparing against `prevStatus`, a
+ * plain ref-like piece of state) is the React-documented way to "adjust
+ * state when a prop/value changes" without an effect —
+ * see https://react.dev/learn/you-might-not-need-an-effect.
  */
 export function CreateEditionForm({ action, initialStateOverride }: CreateEditionFormProps) {
   const [state, formAction, isPending] = useActionState(
@@ -35,8 +52,32 @@ export function CreateEditionForm({ action, initialStateOverride }: CreateEditio
   const baseId = useId();
   const errors = state.status === "error" ? (state.fieldErrors ?? {}) : {};
 
+  const [month, setMonth] = useState("");
+  const [year, setYear] = useState("");
+  const [numberCap, setNumberCap] = useState("");
+  const [drawDate, setDrawDate] = useState("");
+  const [prizeTitle, setPrizeTitle] = useState("");
+
+  // `key={formKey}` below remounts TierPricingCalculator/Select/
+  // PrizeImageInput (their own state doesn't live here, so bumping formKey
+  // is what clears them); the five fields right above are reset directly
+  // since they live in *this* component, unaffected by a child's key.
+  const [formKey, setFormKey] = useState(0);
+  const [prevStatus, setPrevStatus] = useState(state.status);
+  if (state.status !== prevStatus) {
+    setPrevStatus(state.status);
+    if (state.status === "success") {
+      setFormKey((key) => key + 1);
+      setMonth("");
+      setYear("");
+      setNumberCap("");
+      setDrawDate("");
+      setPrizeTitle("");
+    }
+  }
+
   return (
-    <form action={formAction} className="grid gap-4 sm:grid-cols-2">
+    <form key={formKey} action={formAction} className="grid gap-4 sm:grid-cols-2">
       <div>
         <label htmlFor={`${baseId}-month`} className="text-sm font-medium text-foreground">
           Mes
@@ -47,6 +88,8 @@ export function CreateEditionForm({ action, initialStateOverride }: CreateEditio
           type="number"
           min={1}
           max={12}
+          value={month}
+          onChange={(event) => setMonth(event.target.value)}
           aria-invalid={Boolean(errors.month)}
           className={inputClassName}
         />
@@ -66,6 +109,8 @@ export function CreateEditionForm({ action, initialStateOverride }: CreateEditio
           name="year"
           type="number"
           min={2024}
+          value={year}
+          onChange={(event) => setYear(event.target.value)}
           aria-invalid={Boolean(errors.year)}
           className={inputClassName}
         />
@@ -86,6 +131,8 @@ export function CreateEditionForm({ action, initialStateOverride }: CreateEditio
           type="number"
           min={1}
           max={1000000}
+          value={numberCap}
+          onChange={(event) => setNumberCap(event.target.value)}
           aria-invalid={Boolean(errors.numberCap)}
           className={inputClassName}
         />
@@ -104,6 +151,8 @@ export function CreateEditionForm({ action, initialStateOverride }: CreateEditio
           id={`${baseId}-drawDate`}
           name="drawDate"
           type="datetime-local"
+          value={drawDate}
+          onChange={(event) => setDrawDate(event.target.value)}
           aria-invalid={Boolean(errors.drawDate)}
           className={inputClassName}
         />
@@ -122,6 +171,8 @@ export function CreateEditionForm({ action, initialStateOverride }: CreateEditio
           id={`${baseId}-prizeTitle`}
           name="prizeTitle"
           type="text"
+          value={prizeTitle}
+          onChange={(event) => setPrizeTitle(event.target.value)}
           aria-invalid={Boolean(errors.prizeTitle)}
           className={inputClassName}
         />
@@ -133,18 +184,21 @@ export function CreateEditionForm({ action, initialStateOverride }: CreateEditio
       </div>
 
       <div>
-        <label htmlFor={`${baseId}-status`} className="text-sm font-medium text-foreground">
+        <label id={`${baseId}-status-label`} className="text-sm font-medium text-foreground">
           Estado
         </label>
-        <select
-          id={`${baseId}-status`}
-          name="status"
-          defaultValue="open"
-          className={inputClassName}
-        >
-          <option value="open">Abierta</option>
-          <option value="draft">Borrador (premio futuro)</option>
-        </select>
+        <div className="mt-1">
+          <Select
+            id={`${baseId}-status`}
+            name="status"
+            aria-labelledby={`${baseId}-status-label`}
+            defaultValue="open"
+            options={[
+              { value: "open", label: "Abierta" },
+              { value: "draft", label: "Borrador (premio futuro)" },
+            ]}
+          />
+        </div>
       </div>
 
       <div className="sm:col-span-2">

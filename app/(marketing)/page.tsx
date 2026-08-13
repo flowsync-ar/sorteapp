@@ -51,6 +51,7 @@ export default async function LandingPage() {
     ...currentPrize,
     title: openEditionPrize?.title ?? currentPrize.title,
     imageUrl: openEditionPrize?.imageUrl ?? null,
+    drawDateIso: openEditionPrize?.drawDateIso ?? currentPrize.drawDateIso,
   };
 
   return (

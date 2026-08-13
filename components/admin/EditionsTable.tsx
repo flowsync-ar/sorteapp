@@ -7,6 +7,7 @@ import type {
 } from "@/lib/admin/types";
 import { CloseEditionButton } from "./CloseEditionButton";
 import { PrizeImageForm } from "./PrizeImageForm";
+import { PrizeImageThumbnail } from "./PrizeImageThumbnail";
 import { PublishEditionButton } from "./PublishEditionButton";
 import { WinnerForm } from "./WinnerForm";
 
@@ -24,6 +25,14 @@ const STATUS_LABEL: Record<EditionView["status"], string> = {
   open: "Abierta",
   closed: "Cerrada",
   drawn: "Sorteada",
+};
+
+/** Abierta = verde, Cerrada = roja, Sorteada = naranja; Borrador queda neutro. */
+const STATUS_TEXT_CLASS: Record<EditionView["status"], string> = {
+  draft: "text-muted-foreground",
+  open: "text-emerald",
+  closed: "text-red-400",
+  drawn: "text-orange-400",
 };
 
 function formatDate(iso: string | null) {
@@ -65,22 +74,31 @@ export function EditionsTable({
     <table className="w-full border-collapse text-left text-sm">
       <thead>
         <tr className="border-b border-surface text-muted-foreground">
+          <th className="py-2 pr-4">Foto</th>
           <th className="py-2 pr-4">Edición</th>
           <th className="py-2 pr-4">Estado</th>
           <th className="py-2 pr-4">Premio</th>
           <th className="py-2 pr-4">Vendidos</th>
           <th className="py-2 pr-4">Sorteo</th>
-          <th className="py-2 pr-4">Foto del premio</th>
+          <th className="py-2 pr-4">Actualizar foto</th>
           <th className="py-2 pr-4">Acción</th>
         </tr>
       </thead>
       <tbody>
         {editions.map((edition) => (
           <tr key={edition.id} className="border-b border-surface/60 align-top">
+            <td className="py-3 pr-4">
+              <PrizeImageThumbnail
+                imageUrl={edition.prizeImageUrl}
+                alt={edition.prizeTitle ?? `Premio ${edition.month}/${edition.year}`}
+              />
+            </td>
             <td className="py-3 pr-4 text-foreground">
               {edition.month}/{edition.year}
             </td>
-            <td className="py-3 pr-4 text-muted-foreground">{STATUS_LABEL[edition.status]}</td>
+            <td className={`py-3 pr-4 font-medium ${STATUS_TEXT_CLASS[edition.status]}`}>
+              {STATUS_LABEL[edition.status]}
+            </td>
             <td className="py-3 pr-4 text-foreground">{edition.prizeTitle ?? "—"}</td>
             <td className="py-3 pr-4 text-muted-foreground">
               {edition.numbersSold} / {edition.numberCap}

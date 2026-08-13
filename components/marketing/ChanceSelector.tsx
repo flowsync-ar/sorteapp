@@ -2,6 +2,7 @@
 
 import { useId, useState } from "react";
 import type { OpenEditionTier } from "@/lib/marketing/tiers";
+import { Select } from "@/components/ui/Select";
 import { CheckoutButton } from "./CheckoutButton";
 
 interface ChanceSelectorProps {
@@ -62,22 +63,20 @@ export function ChanceSelector({ tiers }: ChanceSelectorProps) {
             </p>
           ) : (
             <>
-              <label htmlFor={selectId} className="text-sm font-medium text-foreground">
+              <label id={selectId} className="text-sm font-medium text-foreground">
                 Cantidad de chances
               </label>
-              <select
-                id={selectId}
-                value={selectedId ?? ""}
-                onChange={(event) => setSelectedId(event.target.value)}
-                className="mt-1 w-full rounded-lg border border-surface bg-ink px-3 py-2.5 text-sm text-foreground focus:border-champagne focus:outline-none"
-              >
-                {tiers.map((tier) => (
-                  <option key={tier.id} value={tier.id}>
-                    {tier.numbersGranted} chance{tier.numbersGranted > 1 ? "s" : ""} —{" "}
-                    {formatArs(tier.priceArs)}
-                  </option>
-                ))}
-              </select>
+              <div className="mt-1">
+                <Select
+                  aria-labelledby={selectId}
+                  value={selectedId ?? ""}
+                  onChange={setSelectedId}
+                  options={tiers.map((tier) => ({
+                    value: tier.id,
+                    label: `${tier.numbersGranted} chance${tier.numbersGranted > 1 ? "s" : ""} — ${formatArs(tier.priceArs)}`,
+                  }))}
+                />
+              </div>
 
               {selected ? (
                 <div className="mt-6 text-center">

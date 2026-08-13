@@ -138,7 +138,7 @@ function ReceiptRow({ receipt, onReview }: ReceiptRowProps) {
                 value={reason}
                 onChange={(event) => setReason(event.target.value)}
                 rows={2}
-                className="w-full rounded-lg border border-surface bg-ink px-3 py-2 text-sm text-foreground focus:border-champagne focus:outline-none"
+                className="w-full rounded-lg border border-white/15 bg-ink px-3 py-2 text-sm text-foreground focus:border-champagne focus:outline-none"
               />
               <button
                 type="button"

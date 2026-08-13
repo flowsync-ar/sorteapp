@@ -9,7 +9,7 @@ describe("LoginForm", () => {
     render(<LoginForm action={vi.fn()} />);
 
     expect(screen.getByLabelText(/^email$/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/contraseña/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/^contraseña$/i)).toBeInTheDocument();
   });
 
   it("submits when both fields are filled", async () => {
@@ -18,7 +18,7 @@ describe("LoginForm", () => {
     render(<LoginForm action={action} />);
 
     await user.type(screen.getByLabelText(/^email$/i), "buyer@example.com");
-    await user.type(screen.getByLabelText(/contraseña/i), "secret123");
+    await user.type(screen.getByLabelText(/^contraseña$/i), "secret123");
     await user.click(screen.getByRole("button", { name: /iniciar sesión/i }));
 
     expect(action).toHaveBeenCalled();

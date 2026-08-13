@@ -39,7 +39,7 @@ export default async function AdminLayout({
 
   return (
     <div className="min-h-screen bg-ink text-foreground">
-      <div className="relative z-20 border-b border-surface bg-surface/40">
+      <div className="relative z-20 min-h-32 border-b border-surface bg-surface/40">
         <Link
           href="/admin"
           className="absolute left-6 top-0 flex items-start gap-2"
@@ -48,8 +48,8 @@ export default async function AdminLayout({
           <Image
             src="/logo-sorteoapp-transp.png"
             alt=""
-            width={2400}
-            height={1309}
+            width={862}
+            height={713}
             className="h-32 w-auto"
           />
           <span className="font-display text-lg text-champagne">Panel admin</span>
